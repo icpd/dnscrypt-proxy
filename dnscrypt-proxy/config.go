@@ -33,6 +33,7 @@ type Config struct {
 	LogFileLatest            bool           `toml:"log_file_latest"`
 	UseSyslog                bool           `toml:"use_syslog"`
 	ServerNames              []string       `toml:"server_names"`
+	UpstreamServers          []string       `toml:"upstream_servers"`
 	DisabledServerNames      []string       `toml:"disabled_server_names"`
 	ListenAddresses          []string       `toml:"listen_addresses"`
 	LocalDoH                 LocalDoHConfig `toml:"local_doh"`
@@ -699,6 +700,7 @@ func ConfigLoad(proxy *Proxy, flags *ConfigFlags) error {
 	proxy.requiredProps = requiredProps
 	proxy.ServerNames = config.ServerNames
 	proxy.DisabledServerNames = config.DisabledServerNames
+	proxy.UpstreamServers = config.UpstreamServers
 	proxy.SourceIPv4 = config.SourceIPv4
 	proxy.SourceIPv6 = config.SourceIPv6
 	proxy.SourceDNSCrypt = config.SourceDNSCrypt

@@ -47,6 +47,7 @@ const (
 	PluginsReturnCodeCloak
 	PluginsReturnCodeServerTimeout
 	PluginsReturnCodeNotReady
+	PluginsReturnCodeUpstream
 )
 
 var PluginsReturnCodeToString = map[PluginsReturnCode]string{
@@ -63,6 +64,7 @@ var PluginsReturnCodeToString = map[PluginsReturnCode]string{
 	PluginsReturnCodeCloak:         "CLOAK",
 	PluginsReturnCodeServerTimeout: "SERVER_TIMEOUT",
 	PluginsReturnCodeNotReady:      "NOT_READY",
+	PluginsReturnCodeUpstream:      "UPSTREAM",
 }
 
 type PluginsState struct {
@@ -125,6 +127,9 @@ func (proxy *Proxy) InitPluginsGlobals() error {
 	}
 	if len(proxy.forwardFile) != 0 {
 		*queryPlugins = append(*queryPlugins, Plugin(new(PluginForward)))
+	}
+	if len(proxy.UpstreamServers) != 0 {
+		*queryPlugins = append(*queryPlugins, Plugin(new(PluginUpstream)))
 	}
 	if proxy.pluginBlockUnqualified {
 		*queryPlugins = append(*queryPlugins, Plugin(new(PluginBlockUnqualified)))

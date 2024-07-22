@@ -70,6 +70,7 @@ type Proxy struct {
 	proxyPublicKey                [32]byte
 	ServerNames                   []string
 	DisabledServerNames           []string
+	UpstreamServers               []string
 	requiredProps                 stamps.ServerInformalProperties
 	certRefreshDelayAfterFailure  time.Duration
 	timeout                       time.Duration

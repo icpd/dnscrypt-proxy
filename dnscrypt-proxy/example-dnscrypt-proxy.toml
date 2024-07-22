@@ -31,6 +31,10 @@
 
 # server_names = ['scaleway-fr', 'google', 'yandex', 'cloudflare']
 
+## Query the upstream server, it's usually a specified intranet DNS.
+## If no result is obtained, the process will not be terminated.
+
+# upstream_servers = ['127.0.0.1:5353']
 
 ## List of local addresses and ports to listen to. Can be IPv4 and/or IPv6.
 ## Example with both IPv4 and IPv6:
