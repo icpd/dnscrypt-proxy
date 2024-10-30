@@ -31,8 +31,10 @@
 
 # server_names = ['scaleway-fr', 'google', 'yandex', 'cloudflare']
 
-## Query the upstream server, it's usually a specified intranet DNS.
-## If no result is obtained, the process will not be terminated.
+## This section defines a special upstream server that will be queried first.
+## If a result is found from this server, it will be returned immediately without caching.
+## If no result is found, dnscrypt-proxy will continue with its usual flow and query
+## other upstream servers based on the existing configurations.
 
 # upstream_servers = ['127.0.0.1:5353']
 
