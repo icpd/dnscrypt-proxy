@@ -108,6 +108,7 @@ type Config struct {
 	DoHClientX509AuthLegacy  DoHClientX509AuthConfig     `toml:"tls_client_auth"`
 	DNS64                    DNS64Config                 `toml:"dns64"`
 	EDNSClientSubnet         []string                    `toml:"edns_client_subnet"`
+	StateDBPath              string                      `toml:"state_db_path"`
 }
 
 func newConfig() Config {
@@ -706,6 +707,7 @@ func ConfigLoad(proxy *Proxy, flags *ConfigFlags) error {
 	proxy.SourceDNSCrypt = config.SourceDNSCrypt
 	proxy.SourceDoH = config.SourceDoH
 	proxy.SourceODoH = config.SourceODoH
+	proxy.StatDBPath = config.StateDBPath
 
 	netprobeTimeout := config.NetprobeTimeout
 	flag.Visit(func(flag *flag.Flag) {

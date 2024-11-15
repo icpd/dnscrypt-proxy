@@ -47,6 +47,11 @@
 
 listen_addresses = ['127.0.0.1:53']
 
+## The file path for the statistics data DB.
+## If the default or configured value is ':memory:',
+## it will be stored in memory and lost after a restart.
+
+# state_db_path = './data/stat.db'
 
 ## Maximum number of simultaneous client connections to accept
 

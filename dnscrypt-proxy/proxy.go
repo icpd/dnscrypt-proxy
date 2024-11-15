@@ -104,6 +104,7 @@ type Proxy struct {
 	SourceDNSCrypt                bool
 	SourceDoH                     bool
 	SourceODoH                    bool
+	StatDBPath                    string
 }
 
 func (proxy *Proxy) registerUDPListener(conn *net.UDPConn) {
