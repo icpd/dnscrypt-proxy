@@ -4,10 +4,12 @@ import (
 	"bytes"
 	"encoding/binary"
 	"encoding/gob"
+	"errors"
 	"fmt"
 	"net"
 	"net/http"
 	"slices"
+	"strconv"
 	"sync"
 	"time"
 
@@ -136,6 +138,7 @@ func (p *PluginStat) doFlush() {
 
 func (p *PluginStat) webServe() {
 	e := gin.Default()
+	e.StaticFile("/", "./static/index.html")
 	e.GET("/stat", p.StatHandler)
 	err := e.Run(":5380")
 	if err != nil {
@@ -145,7 +148,7 @@ func (p *PluginStat) webServe() {
 
 func (p *PluginStat) StatHandler(c *gin.Context) {
 	timeStr := c.DefaultQuery("time", "24h")
-	timeframe, err := time.ParseDuration(timeStr)
+	timeframe, err := parseDuration(timeStr)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -268,7 +271,7 @@ func buildTop(ps []Pair) []map[string]uint64 {
 func loadUnitFromDB(txn *badger.Txn, id uint32) *unitDB {
 	item, err := txn.Get(id2Key(id))
 	if err != nil {
-		dlog.Errorf("get unit from db err: %v", err)
+		dlog.Errorf("get unit from db err: %v,%d", err, id)
 		return nil
 	}
 
@@ -416,4 +419,29 @@ func convertMapToSlice(m map[string]uint64, max int) (s []Pair) {
 		max = len(s)
 	}
 	return s[:max]
+}
+
+func parseDuration(input string) (time.Duration, error) {
+	unitMultipliers := map[string]time.Duration{
+		"h": time.Hour,
+		"d": time.Hour * 24,
+	}
+
+	if len(input) < 2 {
+		return 0, errors.New("invalid duration format")
+	}
+	unit := string(input[len(input)-1])
+	value := input[:len(input)-1]
+
+	multiplier, ok := unitMultipliers[unit]
+	if !ok {
+		return 0, fmt.Errorf("unsupported time unit: %s", unit)
+	}
+
+	amount, err := strconv.Atoi(value)
+	if err != nil {
+		return 0, fmt.Errorf("invalid duration value: %s", value)
+	}
+
+	return time.Duration(amount) * multiplier, nil
 }
