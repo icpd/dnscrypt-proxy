@@ -109,6 +109,7 @@ type Config struct {
 	DNS64                    DNS64Config                 `toml:"dns64"`
 	EDNSClientSubnet         []string                    `toml:"edns_client_subnet"`
 	StateDBPath              string                      `toml:"state_db_path"`
+	WebPgPath                string                      `toml:"web_page_path"`
 }
 
 func newConfig() Config {
@@ -708,6 +709,7 @@ func ConfigLoad(proxy *Proxy, flags *ConfigFlags) error {
 	proxy.SourceDoH = config.SourceDoH
 	proxy.SourceODoH = config.SourceODoH
 	proxy.StatDBPath = config.StateDBPath
+	proxy.WebPgPath = config.WebPgPath
 
 	netprobeTimeout := config.NetprobeTimeout
 	flag.Visit(func(flag *flag.Flag) {

@@ -53,6 +53,10 @@ listen_addresses = ['127.0.0.1:53']
 
 # state_db_path = './data/stat.db'
 
+## Web page html path, default path is ./static/index.html
+
+# web_page_path = './static/index.html'
+
 ## Maximum number of simultaneous client connections to accept
 
 max_clients = 250

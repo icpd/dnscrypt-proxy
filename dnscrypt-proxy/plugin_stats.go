@@ -22,6 +22,8 @@ import (
 const cachedUpstream = "cached"
 
 type PluginStat struct {
+	webPgPath string
+
 	db *badger.DB
 
 	curr    *unit
@@ -37,6 +39,11 @@ func (p *PluginStat) Description() string {
 }
 
 func (p *PluginStat) Init(proxy *Proxy) error {
+	p.webPgPath = "./static/index.html"
+	if proxy.WebPgPath != "" {
+		p.webPgPath = proxy.WebPgPath
+	}
+
 	dbPath := proxy.StatDBPath
 	if dbPath == "" {
 		dbPath = ":memory:"
@@ -138,7 +145,7 @@ func (p *PluginStat) doFlush() {
 
 func (p *PluginStat) webServe() {
 	e := gin.Default()
-	e.StaticFile("/", "./static/index.html")
+	e.StaticFile("/", p.webPgPath)
 	e.GET("/stat", p.StatHandler)
 	err := e.Run(":5380")
 	if err != nil {
@@ -271,7 +278,7 @@ func buildTop(ps []Pair) []map[string]uint64 {
 func loadUnitFromDB(txn *badger.Txn, id uint32) *unitDB {
 	item, err := txn.Get(id2Key(id))
 	if err != nil {
-		dlog.Errorf("get unit from db err: %v,%d", err, id)
+		dlog.Errorf("get unit from db err: %v", err)
 		return nil
 	}
 

@@ -105,6 +105,7 @@ type Proxy struct {
 	SourceDoH                     bool
 	SourceODoH                    bool
 	StatDBPath                    string
+	WebPgPath                     string
 }
 
 func (proxy *Proxy) registerUDPListener(conn *net.UDPConn) {
