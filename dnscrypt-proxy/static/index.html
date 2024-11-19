@@ -74,6 +74,20 @@
         tr:hover {
             background-color: #f1f1f1;
         }
+
+        .more-btn {
+            cursor: pointer;
+            color: #007bff;
+            text-decoration: underline;
+            display: block;
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .loading {
+            text-align: center;
+            margin-top: 20px;
+        }
     </style>
 </head>
 <body>
@@ -136,6 +150,10 @@
         </div>
     </div>
 
+    <!-- 更多按钮与加载提示 -->
+    <div class="loading" id="loading" style="display: none;">加载中...</div>
+    <div id="moreBtn" class="more-btn">更多数据</div>
+
     <!-- 图表部分 -->
     <div class="charts">
         <div class="chart-container">
@@ -151,11 +169,16 @@
 </div>
 
 <script>
+    // 用来存储当前的数据显示
+    window.currentData = null;
+
     // 动态获取数据并更新页面
     async function fetchData(timeRange) {
         try {
             const response = await fetch(`/stat?time=${timeRange}`);
             const data = await response.json();
+
+            window.currentData = data;  // 存储数据在 global 变量中
 
             updateOverview(data);
             updateTables(data);
@@ -167,8 +190,8 @@
 
     // 更新总体概览
     function updateOverview(data) {
-        document.getElementById("totalQuery").innerText = data.total_query;
-        document.getElementById("totalClient").innerText = data.total_client;
+        document.getElementById("totalQuery").innerText = data.total_query.toLocaleString();
+        document.getElementById("totalClient").innerText = data.total_client.toLocaleString();
         const cachedData = data.top_upstream.find(u => u.cached);
         const cachedPercent = cachedData
             ? ((cachedData.cached / data.total_query) * 100).toFixed(2)
@@ -185,26 +208,73 @@
         topDomainsTable.innerHTML = "";
         topClientsTable.innerHTML = "";
 
-        // 渲染域名表
+        // 渲染域名表，默认展示前10条数据
+        const topDomainsToShow = data.top_domain.slice(0, 10);
+        topDomainsToShow.forEach(domain => {
+            const row = document.createElement("tr");
+            const name = Object.keys(domain)[0];
+            const count = Object.values(domain)[0];
+            const formattedCount = count.toLocaleString();
+            row.innerHTML = `<td>${name}</td><td>${formattedCount}</td>`;
+            topDomainsTable.appendChild(row);
+        });
+
+        // 渲染客户端表，默认展示前10条数据
+        const topClientsToShow = data.top_client.slice(0, 10);
+        topClientsToShow.forEach(client => {
+            const row = document.createElement("tr");
+            const ip = Object.keys(client)[0];
+            const count = Object.values(client)[0];
+            const formattedCount = count.toLocaleString();
+            row.innerHTML = `<td>${ip}</td><td>${formattedCount}</td>`;
+            topClientsTable.appendChild(row);
+        });
+
+        // 如果数据量超过10条，显示“查看更多”按钮
+        if (data.top_domain.length > 10 || data.top_client.length > 10) {
+            document.getElementById("moreBtn").style.display = "block";
+        } else {
+            document.getElementById("moreBtn").style.display = "none";
+        }
+    }
+
+    // 点击“查看更多”按钮时展示所有数据
+    function showAllData() {
+        const data = window.currentData; // 从全局变量获取最新数据
+
+        if (!data) {
+            console.error('数据尚未加载或已丢失');
+            return;
+        }
+
+        const topDomainsTable = document.getElementById("topDomainsTable").querySelector("tbody");
+        const topClientsTable = document.getElementById("topClientsTable").querySelector("tbody");
+
+        // 显示所有域名数据
+        topDomainsTable.innerHTML = "";
         data.top_domain.forEach(domain => {
             const row = document.createElement("tr");
             const name = Object.keys(domain)[0];
             const count = Object.values(domain)[0];
-            row.innerHTML = `<td>${name}</td><td>${count}</td>`;
+            row.innerHTML = `<td>${name}</td><td>${count.toLocaleString()}</td>`;
             topDomainsTable.appendChild(row);
         });
 
-        // 渲染客户端表
+        // 显示所有客户端数据
+        topClientsTable.innerHTML = "";
         data.top_client.forEach(client => {
             const row = document.createElement("tr");
             const ip = Object.keys(client)[0];
             const count = Object.values(client)[0];
-            row.innerHTML = `<td>${ip}</td><td>${count}</td>`;
+            row.innerHTML = `<td>${ip}</td><td>${count.toLocaleString()}</td>`;
             topClientsTable.appendChild(row);
         });
+
+        // 隐藏"查看更多"按钮
+        document.getElementById("moreBtn").style.display = "none";
     }
 
-    // 保存图表实例的全局变量
+    // 更新图表
     let upstreamChartInstance = null;
     let avgTimeChartInstance = null;
 
@@ -263,6 +333,7 @@
             }
         });
     }
+
     // 初始化页面
     document.addEventListener("DOMContentLoaded", () => {
         const timeRangeSelector = document.getElementById("timeRange");
@@ -273,6 +344,12 @@
         // 时间范围切换
         timeRangeSelector.addEventListener("change", (event) => {
             fetchData(event.target.value);
+        });
+
+        // 点击“查看更多”按钮时，展示所有数据
+        document.getElementById("moreBtn").addEventListener("click", () => {
+            const timeRange = document.getElementById("timeRange").value;
+            fetchData(timeRange).then(() => showAllData());
         });
     });
 </script>
