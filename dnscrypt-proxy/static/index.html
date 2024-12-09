@@ -97,6 +97,7 @@
         <div>
             <label for="timeRange">时间范围：</label>
             <select id="timeRange">
+                <option value="1h">最近 1 小时</option>
                 <option value="6h">最近 6 小时</option>
                 <option value="24h" selected>最近 24 小时</option>
                 <option value="7d">最近 7 天</option>
@@ -108,12 +109,16 @@
     <!-- 总体概览 -->
     <div class="overview">
         <div>
-            <h2 id="totalQuery">0</h2>
-            <p>总查询数</p>
+            <h2 id="totalClient">0</h2>
+            <p>客户端数</p>
         </div>
         <div>
-            <h2 id="totalClient">0</h2>
-            <p>总客户端数</p>
+            <h2 id="totalQuery">0</h2>
+            <p>查询数</p>
+        </div>
+        <div>
+            <h2 id="totalCached">0</h2>
+            <p>缓存查询数</p>
         </div>
         <div>
             <h2 id="cachedPercent">0%</h2>
@@ -197,6 +202,7 @@
             ? ((cachedData.cached / data.total_query) * 100).toFixed(2)
             : "0.00";
         document.getElementById("cachedPercent").innerText = `${cachedPercent}%`;
+        document.getElementById("totalCached").innerText = cachedData ? cachedData.cached.toLocaleString() : 0;
     }
 
     // 更新表格
@@ -285,8 +291,9 @@
         }
 
         // 创建新的上游请求统计图表
-        const upstreamLabels = data.top_upstream.map(upstream => Object.keys(upstream)[0]);
-        const upstreamData = data.top_upstream.map(upstream => Object.values(upstream)[0]);
+        let topUpstream = data.top_upstream.filter(upstream => Object.keys(upstream)[0] !== 'cached');
+        const upstreamLabels = topUpstream.map(upstream => Object.keys(upstream)[0]);
+        const upstreamData = topUpstream.map(upstream => Object.values(upstream)[0]);
         const ctxUpstream = document.getElementById("upstreamStatsChart").getContext("2d");
         upstreamChartInstance = new Chart(ctxUpstream, {
             type: "bar",
@@ -302,7 +309,7 @@
             },
             options: {
                 responsive: true,
-                scales: { y: { beginAtZero: true } }
+                scales: {y: {beginAtZero: true}}
             }
         });
 
@@ -329,7 +336,7 @@
             },
             options: {
                 responsive: true,
-                scales: { y: { beginAtZero: true } }
+                scales: {y: {beginAtZero: true}}
             }
         });
     }
