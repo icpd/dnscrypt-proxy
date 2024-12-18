@@ -26,8 +26,9 @@ type PluginStat struct {
 
 	db *badger.DB
 
-	curr    *unit
-	currMux sync.RWMutex
+	curr      *unit
+	currMux   sync.RWMutex
+	flushTime time.Time
 }
 
 func (p *PluginStat) Name() string {
@@ -54,6 +55,21 @@ func (p *PluginStat) Init(proxy *Proxy) error {
 		return fmt.Errorf("init stats plugin, open db err: %v", err)
 	}
 	p.db = db
+
+	id := newUnitID()
+	p.curr = newUnit(id)
+	err = db.View(func(txn *badger.Txn) error {
+		u := loadUnitFromDB(txn, id)
+		if u == nil {
+			return nil
+		}
+
+		p.curr.restore(u)
+		return nil
+	})
+	if err != nil {
+		return fmt.Errorf("init stats plugin, load unit err: %v", err)
+	}
 
 	go p.webServe()
 	go p.flush()
@@ -121,11 +137,16 @@ func (p *PluginStat) doFlush() {
 	}
 
 	if u.id == id {
+		if time.Since(p.flushTime) >= time.Minute {
+			goto flush
+		}
+
 		return
 	}
 
 	p.curr = newUnit(id)
 
+flush:
 	data, err := u.unitDB().serialize()
 	if err != nil {
 		dlog.Errorf("flush stat data, serialize err: %v", err)
@@ -140,10 +161,13 @@ func (p *PluginStat) doFlush() {
 		dlog.Errorf("flush stat data, write db err: %v", err)
 	}
 
+	p.flushTime = time.Now()
+
 	return
 }
 
 func (p *PluginStat) webServe() {
+	gin.SetMode(gin.ReleaseMode)
 	e := gin.Default()
 	e.StaticFile("/", p.webPgPath)
 	e.GET("/stat", p.StatHandler)
@@ -183,7 +207,7 @@ func (p *PluginStat) StatHandler(c *gin.Context) {
 	for i := startID; i != currID; i++ {
 		u := loadUnitFromDB(txn, i)
 		if u == nil {
-			u = &unitDB{}
+			continue
 		}
 
 		units = append(units, u)
@@ -337,6 +361,14 @@ func (u *unit) unitDB() *unitDB {
 	}
 }
 
+func (u *unit) restore(udb *unitDB) {
+	u.domains = udb.Domains.toMap()
+	u.clients = udb.Clients.toMap()
+	u.upstreams = udb.Upstreams.toMap()
+	u.upstreamTime = udb.UpstreamDuration.toMap()
+	u.queryTotal = udb.QueryTotal
+}
+
 type entry struct {
 	domain       string
 	client       string
@@ -380,14 +412,6 @@ type unitDB struct {
 	Upstreams        Set
 	UpstreamDuration Set
 	QueryTotal       uint64
-}
-
-func (udb *unitDB) unit(u *unit) {
-	u.domains = udb.Domains.toMap()
-	u.clients = udb.Clients.toMap()
-	u.upstreams = udb.Upstreams.toMap()
-	u.upstreamTime = udb.UpstreamDuration.toMap()
-	u.queryTotal = udb.QueryTotal
 }
 
 func (udb *unitDB) serialize() ([]byte, error) {
