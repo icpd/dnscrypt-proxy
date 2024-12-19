@@ -627,17 +627,11 @@
         });
     }
 
-    // 获取 URL 参数的方法
-    function getURLParameter(name) {
-        const urlParams = new URLSearchParams(window.location.search);
-        return urlParams.get(name);
-    }
-
     // 初始化页面
     document.addEventListener("DOMContentLoaded", () => {
-        // 获取 URL 参数中的时间范围
-        const timeRangeFromURL = getURLParameter("time");
-        const defaultTimeRange = timeRangeFromURL || "24h"; // 默认为 "24h"
+        // 获取本地缓存时间范围
+        const timeRange = sessionStorage.getItem('timeRange');
+        const defaultTimeRange = timeRange || "24h"; // 默认为 "24h"
 
         // 设置下拉框的值
         const timeRangeSelector = document.getElementById("timeRange");
@@ -650,9 +644,8 @@
         timeRangeSelector.addEventListener("change", (event) => {
             const selectedTimeRange = event.target.value;
 
-            // 更新 URL 参数
-            const newURL = `${window.location.pathname}?time=${selectedTimeRange}`;
-            window.history.replaceState({}, "", newURL);
+            // 更新本地缓存
+            sessionStorage.setItem('timeRange', selectedTimeRange);
 
             // 加载新时间范围的数据
             fetchData(selectedTimeRange);
