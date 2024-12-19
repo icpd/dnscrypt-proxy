@@ -436,7 +436,7 @@
     };
 
     // 数字动画函数 - 添加支持小数的处理
-    function animateNumber(element, start, end, duration, isDecimal = false) {
+    function animateNumber(element, start, end, duration) {
         let startTimestamp = null;
         const step = (timestamp) => {
             if (!startTimestamp) startTimestamp = timestamp;
@@ -464,22 +464,22 @@
     // 更新总体概览
     function updateOverview(data) {
         // 为每个数字添加动画效果
-        animateNumber(document.getElementById("totalQuery"), 0, data.total_query, 1000);
-        animateNumber(document.getElementById("totalClient"), 0, data.total_client, 1000);
+        animateNumber(document.getElementById("totalQuery"), 0, data.total_query, 300);
+        animateNumber(document.getElementById("totalClient"), 0, data.total_client, 300);
 
         const cachedData = data.top_upstream.find(u => u.cached);
         const cachedPercent = cachedData
             ? ((cachedData.cached / data.total_query) * 100).toFixed(2)
             : "0.00";
-        animateNumber(document.getElementById("cachedPercent"), 0, parseFloat(cachedPercent), 1000);
-        animateNumber(document.getElementById("totalCached"), 0, cachedData ? cachedData.cached : 0, 1000);
+        animateNumber(document.getElementById("cachedPercent"), 0, parseFloat(cachedPercent), 300);
+        animateNumber(document.getElementById("totalCached"), 0, cachedData ? cachedData.cached : 0, 300);
 
         // 修改 QPS 计算
         const timeRange = document.getElementById("timeRange").value;
         const seconds = timeRangeInSeconds[timeRange];
         const qps = parseFloat((data.total_query / seconds).toFixed(2));
         // 使用实际的 QPS 值作为动画的结束值
-        animateNumber(document.getElementById("qps"), 0, qps, 1000, true);
+        animateNumber(document.getElementById("qps"), 0, qps, 300);
     }
 
     // 更新表格
