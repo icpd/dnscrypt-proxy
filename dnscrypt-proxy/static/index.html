@@ -472,7 +472,7 @@
             ? ((cachedData.cached / data.total_query) * 100).toFixed(2)
             : "0.00";
         animateNumber(document.getElementById("cachedPercent"), 0, parseFloat(cachedPercent), 300);
-        animateNumber(document.getElementById("totalDomain"), 0, data.total_doamin, 300);
+        animateNumber(document.getElementById("totalDomain"), 0, data.total_domain, 300);
 
         // 修改 QPS 计算
         const timeRange = document.getElementById("timeRange").value;
