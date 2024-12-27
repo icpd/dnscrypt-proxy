@@ -343,16 +343,16 @@
             <p>客户端</p>
         </div>
         <div>
+            <h2 id="totalDomain">0</h2>
+            <p>域名数</p>
+        </div>
+        <div>
             <h2 id="qps">0</h2>
             <p>QPS</p>
         </div>
         <div>
             <h2 id="totalQuery">0</h2>
             <p>查询数</p>
-        </div>
-        <div>
-            <h2 id="totalCached">0</h2>
-            <p>缓存命中数</p>
         </div>
         <div>
             <h2 id="cachedPercent">0%</h2>
@@ -472,7 +472,7 @@
             ? ((cachedData.cached / data.total_query) * 100).toFixed(2)
             : "0.00";
         animateNumber(document.getElementById("cachedPercent"), 0, parseFloat(cachedPercent), 300);
-        animateNumber(document.getElementById("totalCached"), 0, cachedData ? cachedData.cached : 0, 300);
+        animateNumber(document.getElementById("totalDomain"), 0, data.total_doamin, 300);
 
         // 修改 QPS 计算
         const timeRange = document.getElementById("timeRange").value;

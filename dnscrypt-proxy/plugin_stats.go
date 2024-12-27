@@ -220,6 +220,7 @@ func (p *PluginStat) StatHandler(c *gin.Context) {
 type Resp struct {
 	TotalQuery             uint64              `json:"total_query"`
 	TotalClient            uint64              `json:"total_client"`
+	TotalDomain            uint64              `json:"total_domain"`
 	TopDomain              []map[string]uint64 `json:"top_domain"`
 	TopClient              []map[string]uint64 `json:"top_client"`
 	TopUpstream            []map[string]uint64 `json:"top_upstream"`
@@ -283,6 +284,7 @@ func buildResp(units []*unitDB) *Resp {
 	return &Resp{
 		TotalQuery:             queryTotal,
 		TotalClient:            uint64(len(clientMap)),
+		TotalDomain:            uint64(len(domainMap)),
 		TopDomain:              buildTop(convertMapToSlice(domainMap, 100)),
 		TopClient:              buildTop(convertMapToSlice(clientMap, 100)),
 		TopUpstream:            buildTop(convertMapToSlice(upstreamMap, 100)),
@@ -353,10 +355,10 @@ func (u *unit) add(e entry) {
 
 func (u *unit) unitDB() *unitDB {
 	return &unitDB{
-		Domains:          convertMapToSlice(u.domains, 500),
-		Clients:          convertMapToSlice(u.clients, 500),
-		Upstreams:        convertMapToSlice(u.upstreams, 500),
-		UpstreamDuration: convertMapToSlice(u.upstreamTime, 500),
+		Domains:          convertMapToSlice(u.domains, 10000),
+		Clients:          convertMapToSlice(u.clients, 10000),
+		Upstreams:        convertMapToSlice(u.upstreams, 10000),
+		UpstreamDuration: convertMapToSlice(u.upstreamTime, 10000),
 		QueryTotal:       u.queryTotal,
 	}
 }
