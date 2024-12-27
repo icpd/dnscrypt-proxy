@@ -19,7 +19,11 @@ import (
 	"github.com/miekg/dns"
 )
 
-const cachedUpstream = "cached"
+const (
+	cachedUpstream = "cached"
+	maxSaveCount   = 10000
+	maxTopCount    = 100
+)
 
 type PluginStat struct {
 	webPgPath string
@@ -271,7 +275,7 @@ func buildResp(units []*unitDB) *Resp {
 			dm[upstream] = durationAvg
 		}
 
-		pairs := convertMapToSlice(dm, 100)
+		pairs := convertMapToSlice(dm, maxTopCount)
 		m := make([]map[string]uint64, 0, len(pairs))
 		for i := len(pairs) - 1; i >= 0; i-- { // reverse
 			p := pairs[i]
@@ -285,9 +289,9 @@ func buildResp(units []*unitDB) *Resp {
 		TotalQuery:             queryTotal,
 		TotalClient:            uint64(len(clientMap)),
 		TotalDomain:            uint64(len(domainMap)),
-		TopDomain:              buildTop(convertMapToSlice(domainMap, 100)),
-		TopClient:              buildTop(convertMapToSlice(clientMap, 100)),
-		TopUpstream:            buildTop(convertMapToSlice(upstreamMap, 100)),
+		TopDomain:              buildTop(convertMapToSlice(domainMap, maxTopCount)),
+		TopClient:              buildTop(convertMapToSlice(clientMap, maxTopCount)),
+		TopUpstream:            buildTop(convertMapToSlice(upstreamMap, maxTopCount)),
 		TopUpstreamAvgDuration: computeUpstreamAvgDuration(),
 	}
 }
@@ -355,10 +359,10 @@ func (u *unit) add(e entry) {
 
 func (u *unit) unitDB() *unitDB {
 	return &unitDB{
-		Domains:          convertMapToSlice(u.domains, 10000),
-		Clients:          convertMapToSlice(u.clients, 10000),
-		Upstreams:        convertMapToSlice(u.upstreams, 10000),
-		UpstreamDuration: convertMapToSlice(u.upstreamTime, 10000),
+		Domains:          convertMapToSlice(u.domains, maxSaveCount),
+		Clients:          convertMapToSlice(u.clients, maxSaveCount),
+		Upstreams:        convertMapToSlice(u.upstreams, maxSaveCount),
+		UpstreamDuration: convertMapToSlice(u.upstreamTime, maxSaveCount),
 		QueryTotal:       u.queryTotal,
 	}
 }
