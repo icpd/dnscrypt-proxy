@@ -365,13 +365,66 @@
 </div>
 
 <script>
+    // 生成随机颜色函数
+    function generateRandomColor() {
+        const hue = Math.floor(Math.random() * 360);
+        const saturation = 70;
+        const lightness = 60;
+        return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+        // 使用 HSL 颜色格式，更容易控制颜色的饱和度和亮度
+    }
+
+    // 更新页面主题色和图表颜色
+    function updateThemeColors() {
+        const hue1 = Math.floor(Math.random() * 360);
+        const hue2 = (hue1 + 40) % 360;
+        const color1 = `hsl(${hue1}, 70%, 60%)`;
+        const color2 = `hsl(${hue2}, 70%, 60%)`;
+        
+        document.documentElement.style.setProperty('--primary-color', color1);
+        document.documentElement.style.setProperty('--secondary-color', color2);
+        document.documentElement.style.setProperty('--primary-gradient', `linear-gradient(135deg, ${color1} 0%, ${color2} 100%)`);
+
+        // 更新图表颜色
+        window.chartColors = {
+            gradient: function(context) {
+                const gradient = context.chart.ctx.createLinearGradient(0, 0, 0, context.chart.height);
+                const color1Alpha = color1.replace('hsl', 'hsla').replace(')', ', 0.8)');
+                const color2Alpha = color2.replace('hsl', 'hsla').replace(')', ', 0.8)');
+                gradient.addColorStop(0, color1Alpha);
+                gradient.addColorStop(1, color2Alpha);
+                return gradient;
+            },
+            hoverGradient: function(context) {
+                const gradient = context.chart.ctx.createLinearGradient(0, 0, 0, context.chart.height);
+                const color1Hover = color1.replace('hsl', 'hsla').replace(')', ', 0.9)');
+                const color2Hover = color2.replace('hsl', 'hsla').replace(')', ', 0.9)');
+                gradient.addColorStop(0, color1Hover);
+                gradient.addColorStop(1, color2Hover);
+                return gradient;
+            }
+        };
+
+        // 更新现有图表的颜色
+        if (upstreamChartInstance) {
+            upstreamChartInstance.data.datasets[0].backgroundColor = window.chartColors.gradient;
+            upstreamChartInstance.data.datasets[0].hoverBackgroundColor = window.chartColors.hoverGradient;
+            upstreamChartInstance.update();
+        }
+        if (avgTimeChartInstance) {
+            avgTimeChartInstance.data.datasets[0].backgroundColor = window.chartColors.gradient;
+            avgTimeChartInstance.data.datasets[0].hoverBackgroundColor = window.chartColors.hoverGradient;
+            avgTimeChartInstance.update();
+        }
+    }
+
     // 用来存储当前的数据显示
     window.currentData = null;
 
     // 动态获取数据并更新页面
     async function fetchData(timeRange) {
         try {
-            const response = await fetch(`http://192.168.2.210:5380/stat?time=${timeRange}`);
+            const response = await fetch(`/stat?time=${timeRange}`);
             const data = await response.json();
 
             window.currentData = data;  // 存储数据在 global 变量中
@@ -537,21 +590,11 @@
                 datasets: [{
                     label: "请求数",
                     data: upstreamData,
-                    backgroundColor: function(context) {
-                        const gradient = context.chart.ctx.createLinearGradient(0, 0, 0, context.chart.height);
-                        gradient.addColorStop(0, "rgba(79, 70, 229, 0.8)");
-                        gradient.addColorStop(1, "rgba(124, 58, 237, 0.8)");
-                        return gradient;
-                    },
+                    backgroundColor: window.chartColors.gradient,
                     borderColor: "transparent",
                     borderRadius: 8,
                     borderWidth: 0,
-                    hoverBackgroundColor: function(context) {
-                        const gradient = context.chart.ctx.createLinearGradient(0, 0, 0, context.chart.height);
-                        gradient.addColorStop(0, "rgba(79, 70, 229, 0.9)");
-                        gradient.addColorStop(1, "rgba(124, 58, 237, 0.9)");
-                        return gradient;
-                    }
+                    hoverBackgroundColor: window.chartColors.hoverGradient
                 }]
             },
             options: {
@@ -615,21 +658,11 @@
                 datasets: [{
                     label: "响应时间 (ms)",
                     data: avgTimeData,
-                    backgroundColor: function(context) {
-                        const gradient = context.chart.ctx.createLinearGradient(0, 0, 0, context.chart.height);
-                        gradient.addColorStop(0, "rgba(129, 140, 248, 0.8)");
-                        gradient.addColorStop(1, "rgba(99, 102, 241, 0.8)");
-                        return gradient;
-                    },
+                    backgroundColor: window.chartColors.gradient,
                     borderColor: "transparent",
                     borderRadius: 8,
                     borderWidth: 0,
-                    hoverBackgroundColor: function(context) {
-                        const gradient = context.chart.ctx.createLinearGradient(0, 0, 0, context.chart.height);
-                        gradient.addColorStop(0, "rgba(129, 140, 248, 0.9)");
-                        gradient.addColorStop(1, "rgba(99, 102, 241, 0.9)");
-                        return gradient;
-                    }
+                    hoverBackgroundColor: window.chartColors.hoverGradient
                 }]
             },
             options: {
@@ -680,6 +713,9 @@
 
     // 初始化页面
     document.addEventListener("DOMContentLoaded", () => {
+        // 更新主题颜色
+        updateThemeColors();
+
         // 获取本地缓存时间范围
         const timeRange = sessionStorage.getItem('timeRange');
         const defaultTimeRange = timeRange || "24h"; // 默认为 "24h"
