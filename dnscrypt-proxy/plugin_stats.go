@@ -173,6 +173,15 @@ flush:
 func (p *PluginStat) webServe() {
 	gin.SetMode(gin.ReleaseMode)
 	e := gin.Default()
+	e.Use(func(c *gin.Context) {
+		c.Header("Access-Control-Allow-Origin", "*")
+		c.Header("Access-Control-Allow-Methods", "GET, OPTIONS")
+		if c.Request.Method == "OPTIONS" {
+			c.AbortWithStatus(204)
+			return
+		}
+		c.Next()
+	})
 	e.StaticFile("/", p.webPgPath)
 	e.GET("/stat", p.StatHandler)
 	err := e.Run(":5380")

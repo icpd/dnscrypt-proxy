@@ -5,753 +5,1043 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DNS Dashboard</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <style>
         :root {
-            --primary-color: #4f46e5;
-            --primary-gradient: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
-            --secondary-color: #818cf8;
-            --background-color: #f8fafc;
-            --card-background: #ffffff;
-            --text-primary: #1e293b;
-            --text-secondary: #64748b;
-            --shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-            --shadow-sm: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-            --shadow-hover: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            --bg-page: #f5f6fa;
+            --bg-card: #ffffff;
+            --bg-subtle: #f0f1f6;
+            --bg-pill-active: #1a1a2e;
+            --border: #e8e9f0;
+            --border-light: #f0f1f6;
+            --text-primary: #1a1a2e;
+            --text-secondary: #6b7085;
+            --text-muted: #9ca0b3;
+            --text-on-dark: #ffffff;
+            --accent: #4f6ef7;
+            --accent-soft: rgba(79, 110, 247, 0.08);
+            --green: #22c55e;
+            --green-soft: rgba(34, 197, 94, 0.08);
+            --green-badge: #dcfce7;
+            --green-badge-text: #15803d;
+            --amber: #f59e0b;
+            --red: #ef4444;
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.02);
+            --shadow-md: 0 4px 12px rgba(0,0,0,0.05), 0 1px 3px rgba(0,0,0,0.03);
+            --radius: 14px;
+            --radius-pill: 999px;
+            --font: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+            --font-mono: 'JetBrains Mono', 'SF Mono', monospace;
         }
 
-        [data-theme="dark"] {
-            --primary-color: #6366f1;
-            --primary-gradient: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
-            --secondary-color: #a5b4fc;
-            --background-color: #0f172a;
-            --card-background: #1e293b;
-            --text-primary: #f1f5f9;
-            --text-secondary: #94a3b8;
-            --shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.15);
-            --shadow-sm: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
-            --shadow-hover: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.2);
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            background-color: var(--background-color);
+            font-family: var(--font);
+            background: var(--bg-page);
             color: var(--text-primary);
-            line-height: 1.5;
-            margin: 0;
-            padding: 20px;
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
         }
 
         .dashboard {
-            max-width: 1400px;
+            max-width: 1280px;
             margin: 0 auto;
-            padding: 20px;
+            padding: 32px 40px 60px;
         }
 
-        .dashboard-header {
+        /* ─── Topbar ─── */
+        .topbar {
             display: flex;
             justify-content: space-between;
             align-items: center;
             margin-bottom: 32px;
         }
 
-        .dashboard-title {
+        .topbar-left {
             display: flex;
             align-items: center;
-            font-size: 28px;
-            font-weight: 700;
-            color: transparent;
-            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
-            -webkit-background-clip: text;
-            background-clip: text;
-            letter-spacing: -0.5px;
-            transition: all 0.3s ease;
-            position: relative;
-            padding-bottom: 4px;
-        }
-
-        .dashboard-title::after {
-            content: '';
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            width: 0;
-            height: 2px;
-            background: var(--primary-gradient);
-            transition: width 0.3s ease;
-        }
-
-        .dashboard-title:hover {
-            transform: translateY(-1px);
-            text-shadow: 0 2px 10px rgba(79, 70, 229, 0.15);
-        }
-
-        .dashboard-title:hover::after {
-            width: 100%;
-        }
-        .filters {
-            display: flex;
             gap: 12px;
+        }
+
+        .logo-mark {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            background: var(--text-primary);
+            display: flex;
             align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-weight: 700;
+            font-size: 15px;
         }
 
-        #timeRange {
-            padding: 8px 16px;
-            border: 1px solid #e2e8f0;
-            border-radius: 12px;
-            background: var(--card-background);
+        .topbar-title {
+            font-size: 20px;
+            font-weight: 700;
             color: var(--text-primary);
-            font-size: 14px;
-            transition: all 0.2s;
-            cursor: pointer;
-            outline: none;
-            min-width: 140px;
+            letter-spacing: -0.3px;
         }
 
-        #timeRange:hover {
-            border-color: var(--primary-color);
+        .topbar-sub {
+            font-size: 13px;
+            font-weight: 400;
+            color: var(--text-muted);
+            margin-top: 1px;
+        }
+
+        .topbar-right {
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
 
         .btn-refresh {
-            background: var(--primary-gradient);
-            color: white;
-            padding: 8px 16px;
-            border-radius: 12px;
-            border: none;
+            padding: 8px 18px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-pill);
+            font-family: var(--font);
+            font-size: 13px;
             font-weight: 500;
+            color: var(--text-secondary);
             cursor: pointer;
-            transition: all 0.3s;
-            box-shadow: var(--shadow-sm);
-            min-width: 100px;
+            transition: all 0.2s;
         }
 
         .btn-refresh:hover {
-            transform: translateY(-1px);
-            box-shadow: var(--shadow);
+            background: var(--bg-subtle);
+            color: var(--text-primary);
+            border-color: #d1d3de;
         }
 
-        .overview {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-            gap: 24px;
-            margin-bottom: 32px;
+        .btn-refresh svg {
+            width: 14px;
+            height: 14px;
+            vertical-align: -2px;
+            margin-right: 4px;
         }
 
-        .overview div {
-            background: var(--card-background);
-            padding: 24px;
-            border-radius: 16px;
+        /* ─── Time Pills ─── */
+        .time-pills {
+            display: flex;
+            gap: 4px;
+            padding: 4px;
+            background: var(--bg-card);
+            border-radius: var(--radius-pill);
+            border: 1px solid var(--border);
             box-shadow: var(--shadow-sm);
-            transition: all 0.3s;
-            border: 1px solid rgba(0, 0, 0, 0.05);
         }
 
-        .overview div:hover {
-            transform: translateY(-4px);
-            box-shadow: var(--shadow-hover);
-        }
-
-        .overview h2 {
-            font-size: 32px;
-            margin: 0;
-            background: var(--primary-gradient);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            font-weight: 600;
-        }
-
-        .overview p {
-            margin: 8px 0 0;
+        .time-pill {
+            padding: 6px 16px;
+            border: none;
+            border-radius: var(--radius-pill);
+            background: transparent;
+            font-family: var(--font);
+            font-size: 12px;
+            font-weight: 500;
             color: var(--text-secondary);
-            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.25s;
+            white-space: nowrap;
+        }
+
+        .time-pill:hover {
+            color: var(--text-primary);
+            background: var(--bg-subtle);
+        }
+
+        .time-pill.active {
+            background: var(--bg-pill-active);
+            color: var(--text-on-dark);
+            box-shadow: 0 2px 6px rgba(26, 26, 46, 0.2);
+        }
+
+        /* ─── Metric Cards Row ─── */
+        .metrics-row {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        .metric-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 22px 24px;
+            box-shadow: var(--shadow-sm);
+            transition: all 0.25s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .metric-card:hover {
+            box-shadow: var(--shadow-md);
+            transform: translateY(-1px);
+        }
+
+        .metric-card-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 14px;
+        }
+
+        .metric-label {
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+
+        .metric-value {
+            font-size: 30px;
+            font-weight: 700;
+            color: var(--text-primary);
+            letter-spacing: -1px;
+            line-height: 1;
+        }
+
+        .metric-desc {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 8px;
+        }
+
+        .metric-desc strong {
+            color: var(--text-secondary);
             font-weight: 500;
         }
 
-        .charts, .tables {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
-            gap: 32px;
-            margin-bottom: 32px;
+        /* Cache card - special large card */
+        .metric-card.cache-card {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            padding: 20px 24px;
         }
 
-        .chart-container, .table-container {
-            background: var(--card-background);
-            padding: 24px;
-            border-radius: 16px;
-            box-shadow: var(--shadow-sm);
-            transition: all 0.3s;
-            border: 1px solid rgba(0, 0, 0, 0.05);
+        .cache-chart-wrap {
+            position: relative;
+            width: 90px;
+            height: 90px;
+            flex-shrink: 0;
         }
 
-        .chart-container:hover, .table-container:hover {
-            box-shadow: var(--shadow);
+        .cache-center-text {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            pointer-events: none;
         }
 
-        .chart-container h2, .table-container h2 {
-            color: var(--text-primary);
+        .cache-percent {
             font-size: 18px;
-            margin: 0 0 20px 0;
+            font-weight: 700;
+            color: var(--green);
+            line-height: 1;
+        }
+
+        .cache-info {
+            flex: 1;
+        }
+
+        .cache-info .metric-label {
+            margin-bottom: 6px;
+        }
+
+        .cache-info .metric-value {
+            font-size: 26px;
+            margin-bottom: 6px;
+        }
+
+        .cache-info .metric-desc {
+            margin-top: 0;
+        }
+
+        /* ─── Upstream Section ─── */
+        .section-row {
+            margin-bottom: 20px;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 14px;
+        }
+
+        .section-title {
+            font-size: 16px;
             font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .section-count {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-muted);
+            background: var(--bg-subtle);
+            padding: 3px 10px;
+            border-radius: var(--radius-pill);
+        }
+
+        .upstream-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-sm);
+            overflow: hidden;
+        }
+
+        .upstream-row {
+            display: grid;
+            grid-template-columns: 180px 1fr 100px 100px;
+            align-items: center;
+            padding: 14px 24px;
+            gap: 20px;
+            border-bottom: 1px solid var(--border-light);
+            transition: background 0.15s;
+        }
+
+        .upstream-row:last-child {
+            border-bottom: none;
+        }
+
+        .upstream-row:hover {
+            background: var(--bg-subtle);
+        }
+
+        .upstream-row.is-cached {
+            background: var(--green-soft);
+        }
+
+        .upstream-row.is-cached:hover {
+            background: rgba(34, 197, 94, 0.1);
+        }
+
+        .upstream-name {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .tag {
+            font-size: 10px;
+            padding: 2px 7px;
+            border-radius: var(--radius-pill);
+            font-weight: 600;
+            letter-spacing: 0.3px;
+            text-transform: uppercase;
+        }
+
+        .tag-cached { background: var(--green-badge); color: var(--green-badge-text); }
+        .tag-doh { background: var(--accent-soft); color: var(--accent); }
+        .tag-dns { background: var(--bg-subtle); color: var(--text-secondary); }
+
+        .upstream-bar-wrap {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .upstream-bar-track {
+            flex: 1;
+            height: 6px;
+            background: var(--bg-subtle);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .upstream-bar-fill {
+            height: 100%;
+            border-radius: 3px;
+            transition: width 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+            background: var(--accent);
+        }
+
+        .upstream-row.is-cached .upstream-bar-fill {
+            background: var(--green);
+        }
+
+        .upstream-pct {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            min-width: 40px;
+            text-align: right;
+        }
+
+        .upstream-count {
+            font-family: var(--font-mono);
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-primary);
+            text-align: right;
+        }
+
+        .upstream-latency {
+            font-family: var(--font-mono);
+            font-size: 12px;
+            text-align: right;
+        }
+
+        .latency-fast { color: var(--green); }
+        .latency-medium { color: var(--amber); }
+        .latency-slow { color: var(--red); }
+
+        /* ─── Tables Row ─── */
+        .tables-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .table-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-sm);
+            overflow: hidden;
+        }
+
+        .table-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 18px 24px 14px;
+        }
+
+        .table-title {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .count-badge {
+            font-size: 11px;
+            font-weight: 600;
+            background: var(--accent-soft);
+            color: var(--accent);
+            padding: 2px 9px;
+            border-radius: var(--radius-pill);
         }
 
         table {
             width: 100%;
-            border-collapse: separate;
-            border-spacing: 0;
+            border-collapse: collapse;
         }
 
-        th {
-            background: var(--background-color);
-            color: var(--text-secondary);
-            font-weight: 500;
-            padding: 12px 16px;
+        thead th {
+            font-size: 11px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 10px 24px;
             text-align: left;
-            font-size: 14px;
-            border-bottom: 2px solid #e2e8f0;
+            border-bottom: 1px solid var(--border);
+            font-weight: 600;
+            background: var(--bg-subtle);
         }
 
-        td {
-            padding: 12px 16px;
-            border-bottom: 1px solid #e2e8f0;
-            font-size: 14px;
-            transition: background-color 0.2s;
+        thead th:last-child { text-align: right; }
+
+        tbody td {
+            font-size: 13px;
+            padding: 0 24px;
+            height: 42px;
+            vertical-align: middle;
+            border-bottom: 1px solid var(--border-light);
+            transition: background 0.15s;
         }
 
-        tr:hover td {
-            background-color: #f8fafc;
+        tbody tr:hover td { background: rgba(79, 110, 247, 0.02); }
+        tbody tr:last-child td { border-bottom: none; }
+
+        .cell-name {
+            font-family: var(--font-mono);
+            font-size: 12px;
+            color: var(--text-primary);
+            max-width: 260px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
 
-        tr:last-child td {
-            border-bottom: none;
+        .cell-bar { width: 100%; }
+
+        .cell-bar-inner {
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
 
-        .more-btn {
-            background: var(--primary-gradient);
-            color: white;
-            padding: 12px 24px;
-            border-radius: 12px;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.3s;
+        .mini-bar-track {
+            flex: 1;
+            height: 4px;
+            background: var(--bg-subtle);
+            border-radius: 2px;
+            overflow: hidden;
+            min-width: 40px;
+        }
+
+        .mini-bar-fill {
+            height: 100%;
+            border-radius: 2px;
+            background: var(--accent);
+            opacity: 0.6;
+            transition: width 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .cell-count {
+            font-family: var(--font-mono);
+            font-size: 12px;
             font-weight: 500;
-            box-shadow: var(--shadow-sm);
-            margin-top: 16px;
+            color: var(--text-secondary);
+            text-align: right;
+            white-space: nowrap;
+            min-width: 55px;
         }
 
-        .more-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: var(--shadow);
+        /* Pagination */
+        .table-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 24px;
+            border-top: 1px solid var(--border-light);
         }
 
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
+        .page-info {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .page-btns {
+            display: flex;
+            gap: 6px;
+        }
+
+        .page-btn {
+            font-family: var(--font);
+            font-size: 12px;
+            font-weight: 500;
+            padding: 5px 12px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+        .page-btn:hover:not(:disabled) {
+            background: var(--bg-subtle);
+            color: var(--text-primary);
+            border-color: #d1d3de;
+        }
+
+        .page-btn:disabled {
+            opacity: 0.35;
+            cursor: not-allowed;
+        }
+
+        /* ─── Loading ─── */
+        .loading-overlay {
+            position: fixed;
+            inset: 0;
+            background: var(--bg-page);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 999;
+            transition: opacity 0.4s;
+        }
+
+        .loading-overlay.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .loading-spinner {
+            width: 28px;
+            height: 28px;
+            border: 2.5px solid var(--border);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* ─── Animations ─── */
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(16px); }
             to { opacity: 1; transform: translateY(0); }
         }
 
-        .dashboard > * {
-            animation: fadeIn 0.5s ease-out forwards;
+        .animate-in { animation: fadeUp 0.5s ease-out both; }
+        .delay-1 { animation-delay: 0.06s; }
+        .delay-2 { animation-delay: 0.12s; }
+        .delay-3 { animation-delay: 0.18s; }
+
+        /* ─── Responsive ─── */
+        @media (max-width: 1100px) {
+            .metrics-row { grid-template-columns: repeat(3, 1fr); }
+            .upstream-row { grid-template-columns: 150px 1fr 80px 80px; }
         }
 
-        /* 响应式优化 */
         @media (max-width: 768px) {
-            .charts, .tables {
-                grid-template-columns: 1fr;
+            .dashboard { padding: 16px; }
+            .metrics-row { grid-template-columns: repeat(2, 1fr); }
+            .tables-row { grid-template-columns: 1fr; }
+            .upstream-row {
+                grid-template-columns: 1fr 1fr;
+                grid-template-rows: auto auto;
             }
-
-            .overview {
-                grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-            }
-
-            .filters {
-                flex-direction: row;
-                align-items: center;
-                padding: 12px 16px;
-                gap: 8px;
-            }
-
-            #timeRange, .btn-refresh {
-                min-width: unset;
-                width: auto;
-                font-size: 13px;
-                padding: 8px 12px;
-            }
+            .upstream-bar-wrap { grid-column: 1 / -1; }
+            .topbar { flex-direction: column; gap: 16px; align-items: flex-start; }
+            .time-pills { flex-wrap: wrap; }
         }
     </style>
 </head>
 <body>
+
+<div id="loadingOverlay" class="loading-overlay">
+    <div class="loading-spinner"></div>
+</div>
+
 <div class="dashboard">
-    <!-- 标题栏 -->
-    <div class="dashboard-header">
-        <h1 class="dashboard-title">DNS DASHBOARD</h1>
-        <div class="filters">
-            <select id="timeRange">
-                <option value="1h">当前整点</option>
-                <option value="6h">近6小时</option>
-                <option value="24h" selected>近24小时</option>
-                <option value="7d">近7天</option>
-                <option value="30d">近30天</option>
-            </select>
-            <button id="refreshDataBtn" class="btn-refresh">刷新数据</button>
+
+    <!-- Topbar -->
+    <div class="topbar animate-in">
+        <div class="topbar-left">
+            <div class="logo-mark">D</div>
+            <div>
+                <div class="topbar-title">DNS Dashboard</div>
+                <div class="topbar-sub">DNSCrypt Proxy</div>
+            </div>
+        </div>
+        <div class="topbar-right">
+            <div class="time-pills" id="timePills">
+                <button class="time-pill" data-value="1h">当前整点</button>
+                <button class="time-pill" data-value="6h">6 小时</button>
+                <button class="time-pill active" data-value="24h">24 小时</button>
+                <button class="time-pill" data-value="7d">7 天</button>
+                <button class="time-pill" data-value="30d">30 天</button>
+            </div>
+            <button id="refreshBtn" class="btn-refresh">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/></svg>
+                刷新
+            </button>
         </div>
     </div>
 
-    <!-- 总体概览 -->
-    <div class="overview">
-        <div>
-            <h2 id="totalClient">0</h2>
-            <p>客户端</p>
+    <!-- Metrics Row -->
+    <div class="metrics-row animate-in delay-1">
+        <!-- Cache Hit Rate -->
+        <div class="metric-card cache-card">
+            <div class="cache-chart-wrap">
+                <canvas id="cacheChart"></canvas>
+                <div class="cache-center-text">
+                    <div class="cache-percent" id="cachePercent">0%</div>
+                </div>
+            </div>
+            <div class="cache-info">
+                <div class="metric-label">缓存命中率</div>
+                <div class="metric-value" id="cacheRateDisplay">0%</div>
+                <div class="metric-desc">命中 <strong id="cacheHit">0</strong> / 总计 <strong id="cacheTotal">0</strong></div>
+            </div>
         </div>
-        <div>
-            <h2 id="totalDomain">0</h2>
-            <p>域名数</p>
+
+        <!-- Total Queries -->
+        <div class="metric-card">
+            <div class="metric-card-head">
+                <div class="metric-label">总查询</div>
+            </div>
+            <div class="metric-value" id="totalQuery">0</div>
+            <div class="metric-desc" id="totalQueryDesc">0 次请求</div>
         </div>
-        <div>
-            <h2 id="qps">0</h2>
-            <p>QPS</p>
+
+        <!-- QPS -->
+        <div class="metric-card">
+            <div class="metric-card-head">
+                <div class="metric-label">QPS</div>
+            </div>
+            <div class="metric-value" id="qps">0</div>
+            <div class="metric-desc" id="qpsTimeRange">每秒查询数</div>
         </div>
-        <div>
-            <h2 id="totalQuery">0</h2>
-            <p>查询数</p>
+
+        <!-- Clients -->
+        <div class="metric-card">
+            <div class="metric-card-head">
+                <div class="metric-label">客户端</div>
+            </div>
+            <div class="metric-value" id="totalClient">0</div>
+            <div class="metric-desc">唯一 IP 数</div>
         </div>
-        <div>
-            <h2 id="cachedPercent">0%</h2>
-            <p>缓存命中率</p>
+
+        <!-- Domains -->
+        <div class="metric-card">
+            <div class="metric-card-head">
+                <div class="metric-label">域名数</div>
+            </div>
+            <div class="metric-value" id="totalDomain">0</div>
+            <div class="metric-desc">唯一域名数</div>
         </div>
     </div>
 
-    <!-- 图表部分 -->
-    <div class="charts">
-        <div class="chart-container">
-            <h2>上游请求统计</h2>
-            <canvas id="upstreamStatsChart"></canvas>
+    <!-- Upstream Section -->
+    <div class="section-row animate-in delay-2">
+        <div class="section-header">
+            <div class="section-title">上游解析器</div>
+            <div class="section-count" id="upstreamCount">0 个</div>
         </div>
-
-        <div class="chart-container">
-            <h2>上游响应时间</h2>
-            <canvas id="upstreamAvgTimeChart"></canvas>
-        </div>
+        <div class="upstream-card" id="upstreamCard"></div>
     </div>
 
-    <!-- 表格部分 -->
-    <div class="tables">
-        <div class="table-container">
-            <h2>热门域名</h2>
-            <table id="topDomainsTable">
+    <!-- Tables -->
+    <div class="tables-row animate-in delay-3">
+        <div class="table-card">
+            <div class="table-header">
+                <div class="table-title">热门域名 <span class="count-badge" id="domainCount">0</span></div>
+            </div>
+            <table>
                 <thead>
-                <tr>
-                    <th>域名</th>
-                    <th>请求次数</th>
-                </tr>
+                    <tr><th>域名</th><th>请求量</th></tr>
                 </thead>
-                <tbody></tbody>
+                <tbody id="domainBody"></tbody>
             </table>
+            <div class="table-footer">
+                <div class="page-info" id="domainPageInfo">-</div>
+                <div class="page-btns">
+                    <button class="page-btn" id="domainPrev" disabled>&larr; 上一页</button>
+                    <button class="page-btn" id="domainNext">下一页 &rarr;</button>
+                </div>
+            </div>
         </div>
 
-        <div class="table-container">
-            <h2>热门客户端</h2>
-            <table id="topClientsTable">
+        <div class="table-card">
+            <div class="table-header">
+                <div class="table-title">热门客户端 <span class="count-badge" id="clientCount">0</span></div>
+            </div>
+            <table>
                 <thead>
-                <tr>
-                    <th>客户端 IP</th>
-                    <th>请求次数</th>
-                </tr>
+                    <tr><th>客户端 IP</th><th>请求量</th></tr>
                 </thead>
-                <tbody></tbody>
+                <tbody id="clientBody"></tbody>
             </table>
+            <div class="table-footer">
+                <div class="page-info" id="clientPageInfo">-</div>
+                <div class="page-btns">
+                    <button class="page-btn" id="clientPrev" disabled>&larr; 上一页</button>
+                    <button class="page-btn" id="clientNext">下一页 &rarr;</button>
+                </div>
+            </div>
         </div>
     </div>
 
-    <!-- 更多按钮 -->
-    <div id="moreBtn" class="more-btn">更多数据</div>
 </div>
 
 <script>
-    // 生成随机颜色函数
-    function generateRandomColor() {
-        const hue = Math.floor(Math.random() * 360);
-        const saturation = 70;
-        const lightness = 60;
-        return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
-        // 使用 HSL 颜色格式，更容易控制颜色的饱和度和亮度
+let currentData = null;
+let cacheChartInstance = null;
+const PAGE_SIZE = 20;
+const domainPage = { current: 0 };
+const clientPage = { current: 0 };
+
+const timeRangeSeconds = { "1h": 3600, "6h": 21600, "24h": 86400, "7d": 604800, "30d": 2592000 };
+
+function getTimeRange() {
+    const active = document.querySelector('.time-pill.active');
+    return active ? active.dataset.value : '24h';
+}
+
+async function fetchData(timeRange) {
+    try {
+        const resp = await fetch(`/stat?time=${timeRange}`);
+        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+        const data = await resp.json();
+        currentData = data;
+        render(data);
+    } catch (e) {
+        console.error("数据加载失败:", e);
+    } finally {
+        document.getElementById("loadingOverlay").classList.add("hidden");
     }
+}
 
-    // 更新页面主题色和图表颜色
-    function updateThemeColors() {
-        const hue1 = Math.floor(Math.random() * 360);
-        const hue2 = (hue1 + 40) % 360;
-        const color1 = `hsl(${hue1}, 70%, 60%)`;
-        const color2 = `hsl(${hue2}, 70%, 60%)`;
-        
-        document.documentElement.style.setProperty('--primary-color', color1);
-        document.documentElement.style.setProperty('--secondary-color', color2);
-        document.documentElement.style.setProperty('--primary-gradient', `linear-gradient(135deg, ${color1} 0%, ${color2} 100%)`);
+function render(data) {
+    renderMetrics(data);
+    renderCacheChart(data);
+    renderUpstream(data);
+    domainPage.current = 0;
+    clientPage.current = 0;
+    renderDomainTable(data);
+    renderClientTable(data);
+}
 
-        // 更新图表颜色
-        window.chartColors = {
-            gradient: function(context) {
-                const gradient = context.chart.ctx.createLinearGradient(0, 0, 0, context.chart.height);
-                const color1Alpha = color1.replace('hsl', 'hsla').replace(')', ', 0.8)');
-                const color2Alpha = color2.replace('hsl', 'hsla').replace(')', ', 0.8)');
-                gradient.addColorStop(0, color1Alpha);
-                gradient.addColorStop(1, color2Alpha);
-                return gradient;
-            },
-            hoverGradient: function(context) {
-                const gradient = context.chart.ctx.createLinearGradient(0, 0, 0, context.chart.height);
-                const color1Hover = color1.replace('hsl', 'hsla').replace(')', ', 0.9)');
-                const color2Hover = color2.replace('hsl', 'hsla').replace(')', ', 0.9)');
-                gradient.addColorStop(0, color1Hover);
-                gradient.addColorStop(1, color2Hover);
-                return gradient;
-            }
-        };
+function renderMetrics(data) {
+    const tr = getTimeRange();
+    const seconds = timeRangeSeconds[tr];
+    const qpsVal = (data.total_query / seconds).toFixed(2);
 
-        // 更新现有图表的颜色
-        if (upstreamChartInstance) {
-            upstreamChartInstance.data.datasets[0].backgroundColor = window.chartColors.gradient;
-            upstreamChartInstance.data.datasets[0].hoverBackgroundColor = window.chartColors.hoverGradient;
-            upstreamChartInstance.update();
-        }
-        if (avgTimeChartInstance) {
-            avgTimeChartInstance.data.datasets[0].backgroundColor = window.chartColors.gradient;
-            avgTimeChartInstance.data.datasets[0].hoverBackgroundColor = window.chartColors.hoverGradient;
-            avgTimeChartInstance.update();
-        }
-    }
+    const cached = data.top_upstream.find(u => Object.keys(u)[0] === "cached");
+    const cachedCount = cached ? Object.values(cached)[0] : 0;
+    const percent = data.total_query > 0 ? ((cachedCount / data.total_query) * 100).toFixed(1) : "0.0";
 
-    // 用来存储当前的数据显示
-    window.currentData = null;
+    animateText("totalQuery", data.total_query, formatNum);
+    animateText("qps", parseFloat(qpsVal), v => v.toFixed(2));
+    animateText("totalClient", data.total_client, formatNum);
+    animateText("totalDomain", data.total_domain, formatNum);
+    animateText("cachePercent", parseFloat(percent), v => v.toFixed(1) + "%");
+    animateText("cacheRateDisplay", parseFloat(percent), v => v.toFixed(1) + "%");
 
-    // 动态获取数据并更新页面
-    async function fetchData(timeRange) {
-        try {
-            const response = await fetch(`/stat?time=${timeRange}`);
-            const data = await response.json();
+    document.getElementById("totalQueryDesc").textContent = formatNum(data.total_query) + " 次请求";
+    document.getElementById("qpsTimeRange").textContent = "每秒查询数";
+    document.getElementById("cacheHit").textContent = formatNum(cachedCount);
+    document.getElementById("cacheTotal").textContent = formatNum(data.total_query);
+}
 
-            window.currentData = data;  // 存储数据在 global 变量中
+function renderCacheChart(data) {
+    const cached = data.top_upstream.find(u => Object.keys(u)[0] === "cached");
+    const cachedCount = cached ? Object.values(cached)[0] : 0;
+    const missCount = Math.max(0, data.total_query - cachedCount);
 
-            updateOverview(data);
-            updateTables(data);
-            updateCharts(data);
-        } catch (error) {
-            console.error("数据加载失败:", error);
-        }
-    }
+    if (cacheChartInstance) cacheChartInstance.destroy();
 
-    // 定义时间范围与秒数的映射
-    const timeRangeInSeconds = {
-        "1h": 3600,
-        "6h": 21600,
-        "24h": 86400,
-        "7d": 604800,
-        "30d": 2592000
-    };
-
-    // 数字动画函数 - 添加支持小数的处理
-    function animateNumber(element, start, end, duration) {
-        let startTimestamp = null;
-        const step = (timestamp) => {
-            if (!startTimestamp) startTimestamp = timestamp;
-            const progress = Math.min((timestamp - startTimestamp) / duration, 1);
-            const currentNumber = progress * (end - start) + start;
-
-            // 根据不同类型的数字进行格式化
-            if (element.id === 'cachedPercent') {
-                element.textContent = `${currentNumber.toFixed(2)}%`;
-            } else if (element.id === 'qps') {
-                // QPS 保留两位小数
-                element.textContent = currentNumber.toFixed(2);
-            } else {
-                // 整数使用千分位格式化
-                element.textContent = Math.floor(currentNumber).toLocaleString();
-            }
-
-            if (progress < 1) {
-                window.requestAnimationFrame(step);
-            }
-        };
-        window.requestAnimationFrame(step);
-    }
-
-    // 更新总体概览
-    function updateOverview(data) {
-        // 为每个数字添加动画效果
-        animateNumber(document.getElementById("totalQuery"), 0, data.total_query, 300);
-        animateNumber(document.getElementById("totalClient"), 0, data.total_client, 300);
-
-        const cachedData = data.top_upstream.find(u => u.cached);
-        const cachedPercent = cachedData
-            ? ((cachedData.cached / data.total_query) * 100).toFixed(2)
-            : "0.00";
-        animateNumber(document.getElementById("cachedPercent"), 0, parseFloat(cachedPercent), 300);
-        animateNumber(document.getElementById("totalDomain"), 0, data.total_domain, 300);
-
-        // 修改 QPS 计算
-        const timeRange = document.getElementById("timeRange").value;
-        const seconds = timeRangeInSeconds[timeRange];
-        const qps = parseFloat((data.total_query / seconds).toFixed(2));
-        // 使用实际的 QPS 值作为动画的结束值
-        animateNumber(document.getElementById("qps"), 0, qps, 300);
-    }
-
-    // 更新表格
-    function updateTables(data) {
-        const topDomainsTable = document.getElementById("topDomainsTable").querySelector("tbody");
-        const topClientsTable = document.getElementById("topClientsTable").querySelector("tbody");
-
-        // 清空表格
-        topDomainsTable.innerHTML = "";
-        topClientsTable.innerHTML = "";
-
-        // 渲染域名表，默认展示前10条数据
-        const topDomainsToShow = data.top_domain.slice(0, 10);
-        topDomainsToShow.forEach(domain => {
-            const row = document.createElement("tr");
-            const name = Object.keys(domain)[0];
-            const count = Object.values(domain)[0];
-            const formattedCount = count.toLocaleString();
-            row.innerHTML = `<td>${name}</td><td>${formattedCount}</td>`;
-            topDomainsTable.appendChild(row);
-        });
-
-        // 渲染客户端表，默认展示前10条数据
-        const topClientsToShow = data.top_client.slice(0, 10);
-        topClientsToShow.forEach(client => {
-            const row = document.createElement("tr");
-            const ip = Object.keys(client)[0];
-            const count = Object.values(client)[0];
-            const formattedCount = count.toLocaleString();
-            row.innerHTML = `<td>${ip}</td><td>${formattedCount}</td>`;
-            topClientsTable.appendChild(row);
-        });
-
-        // 如果数据量超过10条，显示“查看更多”按钮
-        if (data.top_domain.length > 10 || data.top_client.length > 10) {
-            document.getElementById("moreBtn").style.display = "block";
-        } else {
-            document.getElementById("moreBtn").style.display = "none";
-        }
-    }
-
-    // 点击“查看更多”按钮时展示所有数据
-    function showAllData() {
-        const data = window.currentData; // 从全局变量获取最新数据
-
-        if (!data) {
-            console.error('数据尚未加载或已丢失');
-            return;
-        }
-
-        const topDomainsTable = document.getElementById("topDomainsTable").querySelector("tbody");
-        const topClientsTable = document.getElementById("topClientsTable").querySelector("tbody");
-
-        // 显示所有域名数据
-        topDomainsTable.innerHTML = "";
-        data.top_domain.forEach(domain => {
-            const row = document.createElement("tr");
-            const name = Object.keys(domain)[0];
-            const count = Object.values(domain)[0];
-            row.innerHTML = `<td>${name}</td><td>${count.toLocaleString()}</td>`;
-            topDomainsTable.appendChild(row);
-        });
-
-        // 显示所有客户端数据
-        topClientsTable.innerHTML = "";
-        data.top_client.forEach(client => {
-            const row = document.createElement("tr");
-            const ip = Object.keys(client)[0];
-            const count = Object.values(client)[0];
-            row.innerHTML = `<td>${ip}</td><td>${count.toLocaleString()}</td>`;
-            topClientsTable.appendChild(row);
-        });
-
-        // 隐藏"查看更多"按钮
-        document.getElementById("moreBtn").style.display = "none";
-    }
-
-    // 更新图表
-    let upstreamChartInstance = null;
-    let avgTimeChartInstance = null;
-
-    function updateCharts(data) {
-        // 销毁旧的上游请求统计图表实例
-        if (upstreamChartInstance) {
-            upstreamChartInstance.destroy();
-        }
-
-        // 创建新的上游请求统计图表
-        let topUpstream = data.top_upstream.filter(upstream => Object.keys(upstream)[0] !== 'cached');
-        const upstreamLabels = topUpstream.map(upstream => Object.keys(upstream)[0]);
-        const upstreamData = topUpstream.map(upstream => Object.values(upstream)[0]);
-        const ctxUpstream = document.getElementById("upstreamStatsChart").getContext("2d");
-        upstreamChartInstance = new Chart(ctxUpstream, {
-            type: "bar",
-            data: {
-                labels: upstreamLabels,
-                datasets: [{
-                    label: "请求数",
-                    data: upstreamData,
-                    backgroundColor: window.chartColors.gradient,
-                    borderColor: "transparent",
-                    borderRadius: 8,
-                    borderWidth: 0,
-                    hoverBackgroundColor: window.chartColors.hoverGradient
-                }]
-            },
-            options: {
-                responsive: true,
-                animation: {
-                    duration: 1000,
-                    easing: 'easeInOutQuart'
-                },
-                plugins: {
-                    legend: {
-                        labels: {
-                            font: {
-                                family: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-                                size: 14
-                            }
-                        }
-                    }
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        grid: {
-                            color: 'rgba(0, 0, 0, 0.05)',
-                            drawBorder: false
-                        },
-                        ticks: {
-                            font: {
-                                family: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-                                size: 12
-                            }
-                        }
-                    },
-                    x: {
-                        grid: {
-                            display: false
-                        },
-                        ticks: {
-                            font: {
-                                family: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-                                size: 12
-                            }
-                        }
+    const ctx = document.getElementById("cacheChart").getContext("2d");
+    cacheChartInstance = new Chart(ctx, {
+        type: "doughnut",
+        data: {
+            labels: ["命中", "未命中"],
+            datasets: [{
+                data: [cachedCount, missCount],
+                backgroundColor: ["#22c55e", "#e8e9f0"],
+                borderColor: ["transparent", "transparent"],
+                borderWidth: 0,
+                hoverBackgroundColor: ["#16a34a", "#d1d3de"],
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            cutout: "75%",
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    backgroundColor: "#1a1a2e",
+                    titleFont: { family: "'DM Sans', sans-serif", size: 12 },
+                    bodyFont: { family: "'DM Sans', sans-serif", size: 12 },
+                    borderColor: "#e8e9f0",
+                    borderWidth: 1,
+                    padding: 10,
+                    cornerRadius: 8,
+                    callbacks: {
+                        label: ctx => " " + ctx.label + ": " + formatNum(ctx.parsed) + " 次"
                     }
                 }
-            }
-        });
-
-        // 销毁旧的上游响应时间图表实例
-        if (avgTimeChartInstance) {
-            avgTimeChartInstance.destroy();
-        }
-
-        // 创建新的上游响应时间图表
-        const avgTimeLabels = data.top_upstream_avg_time.map(upstream => Object.keys(upstream)[0]);
-        const avgTimeData = data.top_upstream_avg_time.map(upstream => Object.values(upstream)[0]);
-        const ctxAvgTime = document.getElementById("upstreamAvgTimeChart").getContext("2d");
-        avgTimeChartInstance = new Chart(ctxAvgTime, {
-            type: "bar",
-            data: {
-                labels: avgTimeLabels,
-                datasets: [{
-                    label: "响应时间 (ms)",
-                    data: avgTimeData,
-                    backgroundColor: window.chartColors.gradient,
-                    borderColor: "transparent",
-                    borderRadius: 8,
-                    borderWidth: 0,
-                    hoverBackgroundColor: window.chartColors.hoverGradient
-                }]
             },
-            options: {
-                responsive: true,
-                animation: {
-                    duration: 1000,
-                    easing: 'easeInOutQuart'
-                },
-                plugins: {
-                    legend: {
-                        labels: {
-                            font: {
-                                family: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-                                size: 14
-                            }
-                        }
-                    }
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        grid: {
-                            color: 'rgba(0, 0, 0, 0.05)',
-                            drawBorder: false
-                        },
-                        ticks: {
-                            font: {
-                                family: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-                                size: 12
-                            }
-                        }
-                    },
-                    x: {
-                        grid: {
-                            display: false
-                        },
-                        ticks: {
-                            font: {
-                                family: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-                                size: 12
-                            }
-                        }
-                    }
-                }
-            }
-        });
-    }
+            animation: { animateRotate: true, duration: 900, easing: "easeOutQuart" }
+        }
+    });
+}
 
-    // 初始化页面
-    document.addEventListener("DOMContentLoaded", () => {
-        // 更新主题颜色
-        updateThemeColors();
+function renderUpstream(data) {
+    const card = document.getElementById("upstreamCard");
+    card.innerHTML = "";
 
-        // 获取本地缓存时间范围
-        const timeRange = sessionStorage.getItem('timeRange');
-        const defaultTimeRange = timeRange || "24h"; // 默认为 "24h"
+    const total = data.top_upstream.reduce((sum, u) => sum + Object.values(u)[0], 0);
+    document.getElementById("upstreamCount").textContent = data.top_upstream.length + " 个";
 
-        // 设置下拉框的值
-        const timeRangeSelector = document.getElementById("timeRange");
-        timeRangeSelector.value = defaultTimeRange;
+    const latencyMap = {};
+    data.top_upstream_avg_time.forEach(u => {
+        latencyMap[Object.keys(u)[0]] = Object.values(u)[0];
+    });
 
-        // 加载数据
-        fetchData(defaultTimeRange);
+    data.top_upstream.forEach(u => {
+        const name = Object.keys(u)[0];
+        const count = Object.values(u)[0];
+        const isCached = name === "cached";
+        const pct = total > 0 ? (count / total * 100) : 0;
+        const latency = latencyMap[name];
 
-        // 时间范围切换
-        timeRangeSelector.addEventListener("change", (event) => {
-            const selectedTimeRange = event.target.value;
+        let tagClass = "tag-dns", tagText = "DNS";
+        if (isCached) { tagClass = "tag-cached"; tagText = "CACHE"; }
+        else if (name.includes("doh")) { tagClass = "tag-doh"; tagText = "DoH"; }
 
-            // 更新本地缓存
-            sessionStorage.setItem('timeRange', selectedTimeRange);
+        let latencyClass = "latency-fast", latencyText = "-";
+        if (latency !== undefined) {
+            latencyText = latency + " ms";
+            if (latency > 100) latencyClass = "latency-slow";
+            else if (latency > 30) latencyClass = "latency-medium";
+        }
+        if (isCached) { latencyText = "< 1 ms"; latencyClass = "latency-fast"; }
 
-            // 加载新时间范围的数据
-            fetchData(selectedTimeRange);
-        });
+        const row = document.createElement("div");
+        row.className = `upstream-row${isCached ? " is-cached" : ""}`;
+        row.innerHTML = `
+            <div class="upstream-name">${escapeHtml(name)} <span class="tag ${tagClass}">${tagText}</span></div>
+            <div class="upstream-bar-wrap">
+                <div class="upstream-bar-track"><div class="upstream-bar-fill" style="width: 0%"></div></div>
+                <div class="upstream-pct">${pct.toFixed(1)}%</div>
+            </div>
+            <div class="upstream-count">${formatNum(count)}</div>
+            <div class="upstream-latency ${latencyClass}">${latencyText}</div>
+        `;
+        card.appendChild(row);
 
-        // 点击刷新按钮时，重新加载当前时间范围的数据
-        const refreshDataButton = document.getElementById("refreshDataBtn");
-        refreshDataButton.addEventListener("click", () => {
-            const currentTimeRange = timeRangeSelector.value; // 获取当前选中的时间范围
-            fetchData(currentTimeRange); // 重新加载数据
-        });
-
-
-        // 点击“查看更多”按钮时，展示所有数据
-        document.getElementById("moreBtn").addEventListener("click", () => {
-            const timeRange = document.getElementById("timeRange").value;
-            fetchData(timeRange).then(() => showAllData());
+        requestAnimationFrame(() => {
+            row.querySelector(".upstream-bar-fill").style.width = pct.toFixed(1) + "%";
         });
     });
+}
+
+function renderDomainTable(data) {
+    const body = document.getElementById("domainBody");
+    const items = data.top_domain;
+    const total = items.length;
+    const maxVal = total > 0 ? Object.values(items[0])[0] : 1;
+    const start = domainPage.current * PAGE_SIZE;
+    const page = items.slice(start, start + PAGE_SIZE);
+
+    document.getElementById("domainCount").textContent = total;
+    body.innerHTML = "";
+
+    page.forEach(d => {
+        const name = Object.keys(d)[0];
+        const count = Object.values(d)[0];
+        const pct = (count / maxVal * 100).toFixed(1);
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+            <td><div class="cell-name" title="${escapeHtml(name)}">${escapeHtml(name)}</div></td>
+            <td class="cell-bar"><div class="cell-bar-inner">
+                <div class="mini-bar-track"><div class="mini-bar-fill" style="width: ${pct}%"></div></div>
+                <span class="cell-count">${formatNum(count)}</span>
+            </div></td>
+        `;
+        body.appendChild(tr);
+    });
+
+    const totalPages = Math.ceil(total / PAGE_SIZE);
+    document.getElementById("domainPageInfo").textContent = `${domainPage.current + 1} / ${totalPages}`;
+    document.getElementById("domainPrev").disabled = domainPage.current === 0;
+    document.getElementById("domainNext").disabled = start + PAGE_SIZE >= total;
+}
+
+function renderClientTable(data) {
+    const body = document.getElementById("clientBody");
+    const items = data.top_client;
+    const total = items.length;
+    const maxVal = total > 0 ? Object.values(items[0])[0] : 1;
+    const start = clientPage.current * PAGE_SIZE;
+    const page = items.slice(start, start + PAGE_SIZE);
+
+    document.getElementById("clientCount").textContent = total;
+    body.innerHTML = "";
+
+    page.forEach(d => {
+        const ip = Object.keys(d)[0];
+        const count = Object.values(d)[0];
+        const pct = (count / maxVal * 100).toFixed(1);
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+            <td><div class="cell-name">${escapeHtml(ip)}</div></td>
+            <td class="cell-bar"><div class="cell-bar-inner">
+                <div class="mini-bar-track"><div class="mini-bar-fill" style="width: ${pct}%"></div></div>
+                <span class="cell-count">${formatNum(count)}</span>
+            </div></td>
+        `;
+        body.appendChild(tr);
+    });
+
+    const totalPages = Math.ceil(total / PAGE_SIZE);
+    document.getElementById("clientPageInfo").textContent = `${clientPage.current + 1} / ${totalPages}`;
+    document.getElementById("clientPrev").disabled = clientPage.current === 0;
+    document.getElementById("clientNext").disabled = start + PAGE_SIZE >= total;
+}
+
+function formatNum(n) {
+    if (n >= 1e6) return (n / 1e6).toFixed(1) + "M";
+    if (n >= 1e4) return (n / 1e3).toFixed(1) + "K";
+    return Math.round(n).toLocaleString();
+}
+
+function escapeHtml(s) {
+    const d = document.createElement('div');
+    d.textContent = s;
+    return d.innerHTML;
+}
+
+function animateText(id, target, formatter) {
+    const el = document.getElementById(id);
+    const duration = 600;
+    let startTime = null;
+
+    function step(ts) {
+        if (!startTime) startTime = ts;
+        const p = Math.min((ts - startTime) / duration, 1);
+        const eased = 1 - Math.pow(1 - p, 3);
+        el.textContent = formatter(target * eased);
+        if (p < 1) requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+}
+
+// ─── Init ───
+document.addEventListener("DOMContentLoaded", () => {
+    const saved = sessionStorage.getItem("timeRange");
+    if (saved) {
+        document.querySelectorAll('.time-pill').forEach(p => {
+            p.classList.toggle('active', p.dataset.value === saved);
+        });
+    }
+
+    fetchData(getTimeRange());
+
+    // Time pill clicks
+    document.getElementById("timePills").addEventListener("click", e => {
+        const pill = e.target.closest('.time-pill');
+        if (!pill) return;
+        document.querySelectorAll('.time-pill').forEach(p => p.classList.remove('active'));
+        pill.classList.add('active');
+        sessionStorage.setItem("timeRange", pill.dataset.value);
+        fetchData(pill.dataset.value);
+    });
+
+    document.getElementById("refreshBtn").addEventListener("click", () => {
+        fetchData(getTimeRange());
+    });
+
+    document.getElementById("domainPrev").addEventListener("click", () => {
+        if (domainPage.current > 0) { domainPage.current--; renderDomainTable(currentData); }
+    });
+    document.getElementById("domainNext").addEventListener("click", () => {
+        if ((domainPage.current + 1) * PAGE_SIZE < currentData.top_domain.length) {
+            domainPage.current++; renderDomainTable(currentData);
+        }
+    });
+    document.getElementById("clientPrev").addEventListener("click", () => {
+        if (clientPage.current > 0) { clientPage.current--; renderClientTable(currentData); }
+    });
+    document.getElementById("clientNext").addEventListener("click", () => {
+        if ((clientPage.current + 1) * PAGE_SIZE < currentData.top_client.length) {
+            clientPage.current++; renderClientTable(currentData);
+        }
+    });
+});
 </script>
 </body>
 </html>
