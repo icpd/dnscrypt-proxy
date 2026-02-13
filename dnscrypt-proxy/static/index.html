@@ -216,18 +216,18 @@
             font-weight: 500;
         }
 
-        /* Cache card - special large card */
+        /* Cache card */
         .metric-card.cache-card {
             display: flex;
             align-items: center;
-            gap: 20px;
+            gap: 14px;
             padding: 20px 24px;
         }
 
         .cache-chart-wrap {
             position: relative;
-            width: 90px;
-            height: 90px;
+            width: 72px;
+            height: 72px;
             flex-shrink: 0;
         }
 
@@ -242,7 +242,7 @@
         }
 
         .cache-percent {
-            font-size: 18px;
+            font-size: 15px;
             font-weight: 700;
             color: var(--green);
             line-height: 1;
@@ -250,15 +250,17 @@
 
         .cache-info {
             flex: 1;
+            min-width: 0;
         }
 
         .cache-info .metric-label {
-            margin-bottom: 6px;
+            margin-bottom: 4px;
+            white-space: nowrap;
         }
 
         .cache-info .metric-value {
-            font-size: 26px;
-            margin-bottom: 6px;
+            font-size: 24px;
+            margin-bottom: 4px;
         }
 
         .cache-info .metric-desc {
@@ -365,8 +367,11 @@
         .upstream-bar-fill {
             height: 100%;
             border-radius: 3px;
-            transition: width 0.8s cubic-bezier(0.16, 1, 0.3, 1);
             background: var(--accent);
+        }
+
+        .upstream-bar-fill.animated {
+            transition: width 0.8s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
         .upstream-row.is-cached .upstream-bar-fill {
@@ -592,6 +597,15 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
+        /* 数据刷新时的淡入淡出 */
+        .content-fade {
+            transition: opacity 0.18s ease;
+        }
+
+        .content-fade.fading {
+            opacity: 0;
+        }
+
         .animate-in { animation: fadeUp 0.5s ease-out both; }
         .delay-1 { animation-delay: 0.06s; }
         .delay-2 { animation-delay: 0.12s; }
@@ -650,7 +664,7 @@
     </div>
 
     <!-- Metrics Row -->
-    <div class="metrics-row animate-in delay-1">
+    <div class="metrics-row animate-in delay-1 content-fade" id="metricsRow">
         <!-- Cache Hit Rate -->
         <div class="metric-card cache-card">
             <div class="cache-chart-wrap">
@@ -704,7 +718,7 @@
     </div>
 
     <!-- Upstream Section -->
-    <div class="section-row animate-in delay-2">
+    <div class="section-row animate-in delay-2 content-fade" id="upstreamSection">
         <div class="section-header">
             <div class="section-title">上游解析器</div>
             <div class="section-count" id="upstreamCount">0 个</div>
@@ -713,7 +727,7 @@
     </div>
 
     <!-- Tables -->
-    <div class="tables-row animate-in delay-3">
+    <div class="tables-row animate-in delay-3 content-fade" id="tablesRow">
         <div class="table-card">
             <div class="table-header">
                 <div class="table-title">热门域名 <span class="count-badge" id="domainCount">0</span></div>
@@ -758,9 +772,11 @@
 <script>
 let currentData = null;
 let cacheChartInstance = null;
+let isFirstLoad = true;
 const PAGE_SIZE = 20;
 const domainPage = { current: 0 };
 const clientPage = { current: 0 };
+const fadeContainers = () => ["metricsRow", "upstreamSection", "tablesRow"].map(id => document.getElementById(id));
 
 const timeRangeSeconds = { "1h": 3600, "6h": 21600, "24h": 86400, "7d": 604800, "30d": 2592000 };
 
@@ -771,13 +787,36 @@ function getTimeRange() {
 
 async function fetchData(timeRange) {
     try {
-        const resp = await fetch(`/stat?time=${timeRange}`);
+        const refreshing = !isFirstLoad;
+
+        // 先发起请求（不阻塞淡出动画）
+        const fetchPromise = fetch(`/stat?time=${timeRange}`);
+
+        // 非首次加载：淡出，同时等请求完成
+        if (refreshing) {
+            fadeContainers().forEach(el => el.classList.add("fading"));
+        }
+
+        const [resp] = await Promise.all([
+            fetchPromise,
+            refreshing ? new Promise(r => setTimeout(r, 200)) : Promise.resolve()
+        ]);
+
         if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
         const data = await resp.json();
         currentData = data;
         render(data);
+
+        // 淡入
+        if (refreshing) {
+            requestAnimationFrame(() => {
+                fadeContainers().forEach(el => el.classList.remove("fading"));
+            });
+        }
+        isFirstLoad = false;
     } catch (e) {
         console.error("数据加载失败:", e);
+        fadeContainers().forEach(el => el.classList.remove("fading"));
     } finally {
         document.getElementById("loadingOverlay").classList.add("hidden");
     }
@@ -820,7 +859,11 @@ function renderCacheChart(data) {
     const cachedCount = cached ? Object.values(cached)[0] : 0;
     const missCount = Math.max(0, data.total_query - cachedCount);
 
-    if (cacheChartInstance) cacheChartInstance.destroy();
+    if (cacheChartInstance) {
+        cacheChartInstance.data.datasets[0].data = [cachedCount, missCount];
+        cacheChartInstance.update();
+        return;
+    }
 
     const ctx = document.getElementById("cacheChart").getContext("2d");
     cacheChartInstance = new Chart(ctx, {
@@ -861,8 +904,6 @@ function renderCacheChart(data) {
 
 function renderUpstream(data) {
     const card = document.getElementById("upstreamCard");
-    card.innerHTML = "";
-
     const total = data.top_upstream.reduce((sum, u) => sum + Object.values(u)[0], 0);
     document.getElementById("upstreamCount").textContent = data.top_upstream.length + " 个";
 
@@ -871,6 +912,7 @@ function renderUpstream(data) {
         latencyMap[Object.keys(u)[0]] = Object.values(u)[0];
     });
 
+    let html = "";
     data.top_upstream.forEach(u => {
         const name = Object.keys(u)[0];
         const count = Object.values(u)[0];
@@ -890,23 +932,32 @@ function renderUpstream(data) {
         }
         if (isCached) { latencyText = "< 1 ms"; latencyClass = "latency-fast"; }
 
-        const row = document.createElement("div");
-        row.className = `upstream-row${isCached ? " is-cached" : ""}`;
-        row.innerHTML = `
+        html += `<div class="upstream-row${isCached ? " is-cached" : ""}">
             <div class="upstream-name">${escapeHtml(name)} <span class="tag ${tagClass}">${tagText}</span></div>
             <div class="upstream-bar-wrap">
-                <div class="upstream-bar-track"><div class="upstream-bar-fill" style="width: 0%"></div></div>
+                <div class="upstream-bar-track"><div class="upstream-bar-fill" data-pct="${pct.toFixed(1)}"></div></div>
                 <div class="upstream-pct">${pct.toFixed(1)}%</div>
             </div>
             <div class="upstream-count">${formatNum(count)}</div>
             <div class="upstream-latency ${latencyClass}">${latencyText}</div>
-        `;
-        card.appendChild(row);
-
-        requestAnimationFrame(() => {
-            row.querySelector(".upstream-bar-fill").style.width = pct.toFixed(1) + "%";
-        });
+        </div>`;
     });
+
+    card.innerHTML = html;
+    if (isFirstLoad) {
+        // 首次加载：从 0 动画到目标宽度
+        requestAnimationFrame(() => {
+            card.querySelectorAll(".upstream-bar-fill").forEach(bar => {
+                bar.classList.add("animated");
+                bar.style.width = bar.dataset.pct + "%";
+            });
+        });
+    } else {
+        // 后续刷新：直接设置目标宽度，不动画
+        card.querySelectorAll(".upstream-bar-fill").forEach(bar => {
+            bar.style.width = bar.dataset.pct + "%";
+        });
+    }
 }
 
 function renderDomainTable(data) {
@@ -918,22 +969,21 @@ function renderDomainTable(data) {
     const page = items.slice(start, start + PAGE_SIZE);
 
     document.getElementById("domainCount").textContent = total;
-    body.innerHTML = "";
 
+    let html = "";
     page.forEach(d => {
         const name = Object.keys(d)[0];
         const count = Object.values(d)[0];
         const pct = (count / maxVal * 100).toFixed(1);
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
+        html += `<tr>
             <td><div class="cell-name" title="${escapeHtml(name)}">${escapeHtml(name)}</div></td>
             <td class="cell-bar"><div class="cell-bar-inner">
                 <div class="mini-bar-track"><div class="mini-bar-fill" style="width: ${pct}%"></div></div>
                 <span class="cell-count">${formatNum(count)}</span>
             </div></td>
-        `;
-        body.appendChild(tr);
+        </tr>`;
     });
+    body.innerHTML = html;
 
     const totalPages = Math.ceil(total / PAGE_SIZE);
     document.getElementById("domainPageInfo").textContent = `${domainPage.current + 1} / ${totalPages}`;
@@ -950,22 +1000,21 @@ function renderClientTable(data) {
     const page = items.slice(start, start + PAGE_SIZE);
 
     document.getElementById("clientCount").textContent = total;
-    body.innerHTML = "";
 
+    let html = "";
     page.forEach(d => {
         const ip = Object.keys(d)[0];
         const count = Object.values(d)[0];
         const pct = (count / maxVal * 100).toFixed(1);
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
+        html += `<tr>
             <td><div class="cell-name">${escapeHtml(ip)}</div></td>
             <td class="cell-bar"><div class="cell-bar-inner">
                 <div class="mini-bar-track"><div class="mini-bar-fill" style="width: ${pct}%"></div></div>
                 <span class="cell-count">${formatNum(count)}</span>
             </div></td>
-        `;
-        body.appendChild(tr);
+        </tr>`;
     });
+    body.innerHTML = html;
 
     const totalPages = Math.ceil(total / PAGE_SIZE);
     document.getElementById("clientPageInfo").textContent = `${clientPage.current + 1} / ${totalPages}`;
@@ -985,8 +1034,18 @@ function escapeHtml(s) {
     return d.innerHTML;
 }
 
+const animateFrom = {};
 function animateText(id, target, formatter) {
     const el = document.getElementById(id);
+    const from = animateFrom[id] || 0;
+    animateFrom[id] = target;
+
+    // 非首次加载或值未变：直接设最终值
+    if (!isFirstLoad || from === target) {
+        el.textContent = formatter(target);
+        return;
+    }
+
     const duration = 600;
     let startTime = null;
 
@@ -994,7 +1053,7 @@ function animateText(id, target, formatter) {
         if (!startTime) startTime = ts;
         const p = Math.min((ts - startTime) / duration, 1);
         const eased = 1 - Math.pow(1 - p, 3);
-        el.textContent = formatter(target * eased);
+        el.textContent = formatter(from + (target - from) * eased);
         if (p < 1) requestAnimationFrame(step);
     }
     requestAnimationFrame(step);
