@@ -337,19 +337,6 @@
             gap: 8px;
         }
 
-        .tag {
-            font-size: 10px;
-            padding: 2px 7px;
-            border-radius: var(--radius-pill);
-            font-weight: 600;
-            letter-spacing: 0.3px;
-            text-transform: uppercase;
-        }
-
-        .tag-cached { background: var(--green-badge); color: var(--green-badge-text); }
-        .tag-doh { background: var(--accent-soft); color: var(--accent); }
-        .tag-dns { background: var(--bg-subtle); color: var(--text-secondary); }
-
         .upstream-bar-wrap {
             display: flex;
             align-items: center;
@@ -676,7 +663,7 @@
             <div class="cache-info">
                 <div class="metric-label">缓存命中率</div>
                 <div class="metric-value" id="cacheRateDisplay">0%</div>
-                <div class="metric-desc">命中 <strong id="cacheHit">0</strong> / 总计 <strong id="cacheTotal">0</strong></div>
+                <div class="metric-desc">命中 <strong id="cacheHit">0</strong><br>总计 <strong id="cacheTotal">0</strong></div>
             </div>
         </div>
 
@@ -773,6 +760,7 @@
 let currentData = null;
 let cacheChartInstance = null;
 let isFirstLoad = true;
+let lastTimeRange = null;
 const PAGE_SIZE = 20;
 const domainPage = { current: 0 };
 const clientPage = { current: 0 };
@@ -788,31 +776,37 @@ function getTimeRange() {
 async function fetchData(timeRange) {
     try {
         const refreshing = !isFirstLoad;
+        const isTimeSwitch = refreshing && timeRange !== lastTimeRange;
 
-        // 先发起请求（不阻塞淡出动画）
         const fetchPromise = fetch(`/stat?time=${timeRange}`);
 
-        // 非首次加载：淡出，同时等请求完成
-        if (refreshing) {
+        // 仅切换时间范围时使用淡出（防闪烁）；刷新靠数字动画反馈
+        if (isTimeSwitch) {
             fadeContainers().forEach(el => el.classList.add("fading"));
         }
 
         const [resp] = await Promise.all([
             fetchPromise,
-            refreshing ? new Promise(r => setTimeout(r, 200)) : Promise.resolve()
+            isTimeSwitch ? new Promise(r => setTimeout(r, 200)) : Promise.resolve()
         ]);
 
         if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
         const data = await resp.json();
         currentData = data;
+
+        // 非首次加载：重置动画起点为 0，让数字从 0 开始动画
+        if (refreshing) {
+            Object.keys(animateFrom).forEach(k => { animateFrom[k] = 0; });
+        }
+
         render(data);
 
-        // 淡入
-        if (refreshing) {
+        if (isTimeSwitch) {
             requestAnimationFrame(() => {
                 fadeContainers().forEach(el => el.classList.remove("fading"));
             });
         }
+        lastTimeRange = timeRange;
         isFirstLoad = false;
     } catch (e) {
         console.error("数据加载失败:", e);
@@ -920,10 +914,6 @@ function renderUpstream(data) {
         const pct = total > 0 ? (count / total * 100) : 0;
         const latency = latencyMap[name];
 
-        let tagClass = "tag-dns", tagText = "DNS";
-        if (isCached) { tagClass = "tag-cached"; tagText = "CACHE"; }
-        else if (name.includes("doh")) { tagClass = "tag-doh"; tagText = "DoH"; }
-
         let latencyClass = "latency-fast", latencyText = "-";
         if (latency !== undefined) {
             latencyText = latency + " ms";
@@ -933,7 +923,7 @@ function renderUpstream(data) {
         if (isCached) { latencyText = "< 1 ms"; latencyClass = "latency-fast"; }
 
         html += `<div class="upstream-row${isCached ? " is-cached" : ""}">
-            <div class="upstream-name">${escapeHtml(name)} <span class="tag ${tagClass}">${tagText}</span></div>
+            <div class="upstream-name">${escapeHtml(name)}</div>
             <div class="upstream-bar-wrap">
                 <div class="upstream-bar-track"><div class="upstream-bar-fill" data-pct="${pct.toFixed(1)}"></div></div>
                 <div class="upstream-pct">${pct.toFixed(1)}%</div>
@@ -944,20 +934,13 @@ function renderUpstream(data) {
     });
 
     card.innerHTML = html;
-    if (isFirstLoad) {
-        // 首次加载：从 0 动画到目标宽度
-        requestAnimationFrame(() => {
-            card.querySelectorAll(".upstream-bar-fill").forEach(bar => {
-                bar.classList.add("animated");
-                bar.style.width = bar.dataset.pct + "%";
-            });
-        });
-    } else {
-        // 后续刷新：直接设置目标宽度，不动画
+    // 始终从 0 动画到目标宽度
+    requestAnimationFrame(() => {
         card.querySelectorAll(".upstream-bar-fill").forEach(bar => {
+            bar.classList.add("animated");
             bar.style.width = bar.dataset.pct + "%";
         });
-    }
+    });
 }
 
 function renderDomainTable(data) {
@@ -1040,8 +1023,8 @@ function animateText(id, target, formatter) {
     const from = animateFrom[id] || 0;
     animateFrom[id] = target;
 
-    // 非首次加载或值未变：直接设最终值
-    if (!isFirstLoad || from === target) {
+    // 值未变：直接设最终值
+    if (from === target) {
         el.textContent = formatter(target);
         return;
     }
