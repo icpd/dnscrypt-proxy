@@ -62,32 +62,27 @@
         .topbar-left {
             display: flex;
             align-items: center;
-            min-width: 0;
+            gap: 12px;
         }
 
-        .brand-wordmark {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            color: var(--text-primary);
-            line-height: 1;
-            white-space: nowrap;
-        }
-
-        .brand-dns {
-            padding: 8px 11px 9px;
+        .logo-mark {
+            width: 36px;
+            height: 36px;
             border-radius: 10px;
             background: var(--text-primary);
-            color: var(--text-on-dark);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-weight: 700;
             font-size: 15px;
-            font-weight: 800;
-            letter-spacing: 0;
         }
 
-        .brand-dashboard {
-            font-size: 21px;
+        .topbar-title {
+            font-size: 20px;
             font-weight: 700;
-            letter-spacing: 0;
+            color: var(--text-primary);
+            letter-spacing: -0.3px;
         }
 
         .topbar-right {
@@ -603,7 +598,6 @@
             }
             .upstream-bar-wrap { grid-column: 1 / -1; }
             .topbar { flex-direction: column; gap: 16px; align-items: flex-start; }
-            .brand-dashboard { font-size: 20px; }
             .time-pills { flex-wrap: wrap; }
         }
     </style>
@@ -619,9 +613,9 @@
     <!-- Topbar -->
     <div class="topbar animate-in">
         <div class="topbar-left">
-            <div class="brand-wordmark" aria-label="DNS Dashboard">
-                <span class="brand-dns">DNS</span>
-                <span class="brand-dashboard">Dashboard</span>
+            <div class="logo-mark">D</div>
+            <div>
+                <div class="topbar-title">DNS Dashboard</div>
             </div>
         </div>
         <div class="topbar-right">
