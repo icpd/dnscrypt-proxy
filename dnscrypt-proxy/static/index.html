@@ -62,34 +62,32 @@
         .topbar-left {
             display: flex;
             align-items: center;
-            gap: 12px;
+            min-width: 0;
         }
 
-        .logo-mark {
-            width: 36px;
-            height: 36px;
-            border-radius: 10px;
-            background: var(--text-primary);
+        .brand-wordmark {
             display: flex;
             align-items: center;
-            justify-content: center;
-            color: #fff;
-            font-weight: 700;
-            font-size: 15px;
-        }
-
-        .topbar-title {
-            font-size: 20px;
-            font-weight: 700;
+            gap: 10px;
             color: var(--text-primary);
-            letter-spacing: -0.3px;
+            line-height: 1;
+            white-space: nowrap;
         }
 
-        .topbar-sub {
-            font-size: 13px;
-            font-weight: 400;
-            color: var(--text-muted);
-            margin-top: 1px;
+        .brand-dns {
+            padding: 8px 11px 9px;
+            border-radius: 10px;
+            background: var(--text-primary);
+            color: var(--text-on-dark);
+            font-size: 15px;
+            font-weight: 800;
+            letter-spacing: 0;
+        }
+
+        .brand-dashboard {
+            font-size: 21px;
+            font-weight: 700;
+            letter-spacing: 0;
         }
 
         .topbar-right {
@@ -605,6 +603,7 @@
             }
             .upstream-bar-wrap { grid-column: 1 / -1; }
             .topbar { flex-direction: column; gap: 16px; align-items: flex-start; }
+            .brand-dashboard { font-size: 20px; }
             .time-pills { flex-wrap: wrap; }
         }
     </style>
@@ -620,10 +619,9 @@
     <!-- Topbar -->
     <div class="topbar animate-in">
         <div class="topbar-left">
-            <div class="logo-mark">D</div>
-            <div>
-                <div class="topbar-title">DNS Dashboard</div>
-                <div class="topbar-sub">DNSCrypt Proxy</div>
+            <div class="brand-wordmark" aria-label="DNS Dashboard">
+                <span class="brand-dns">DNS</span>
+                <span class="brand-dashboard">Dashboard</span>
             </div>
         </div>
         <div class="topbar-right">
