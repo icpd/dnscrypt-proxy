@@ -285,15 +285,6 @@
             color: var(--text-primary);
         }
 
-        .section-count {
-            font-size: 12px;
-            font-weight: 600;
-            color: var(--text-muted);
-            background: var(--bg-subtle);
-            padding: 3px 10px;
-            border-radius: var(--radius-pill);
-        }
-
         .upstream-card {
             background: var(--bg-card);
             border: 1px solid var(--border);
@@ -708,7 +699,6 @@
     <div class="section-row animate-in delay-2 content-fade" id="upstreamSection">
         <div class="section-header">
             <div class="section-title">上游解析器</div>
-            <div class="section-count" id="upstreamCount">0 个</div>
         </div>
         <div class="upstream-card" id="upstreamCard"></div>
     </div>
@@ -899,7 +889,6 @@ function renderCacheChart(data) {
 function renderUpstream(data) {
     const card = document.getElementById("upstreamCard");
     const total = data.top_upstream.reduce((sum, u) => sum + Object.values(u)[0], 0);
-    document.getElementById("upstreamCount").textContent = data.top_upstream.length + " 个";
 
     const latencyMap = {};
     data.top_upstream_avg_time.forEach(u => {
