@@ -916,7 +916,7 @@ function renderUpstream(data) {
 
         let latencyClass = "latency-fast", latencyText = "-";
         if (latency !== undefined) {
-            latencyText = latency + " ms";
+            latencyText = latency === 0 ? "< 1 ms" : latency + " ms";
             if (latency > 100) latencyClass = "latency-slow";
             else if (latency > 30) latencyClass = "latency-medium";
         }
